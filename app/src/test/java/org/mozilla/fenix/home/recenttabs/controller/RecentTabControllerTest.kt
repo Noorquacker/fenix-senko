@@ -28,7 +28,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mozilla.fenix.GleanMetrics.RecentTabs
-import org.mozilla.fenix.GleanMetrics.SearchTerms
 import org.mozilla.fenix.R
 import org.mozilla.fenix.components.AppStore
 import org.mozilla.fenix.helpers.FenixRobolectricTestRunner
@@ -54,7 +53,7 @@ class RecentTabControllerTest {
     @Before
     fun setup() {
         store = BrowserStore(
-            BrowserState()
+            BrowserState(),
         )
         controller = spyk(
             DefaultRecentTabsController(
@@ -62,7 +61,7 @@ class RecentTabControllerTest {
                 navController = navController,
                 store = store,
                 appStore = appStore,
-            )
+            ),
         )
         every { navController.navigateUp() } returns true
     }
@@ -78,7 +77,7 @@ class RecentTabControllerTest {
 
         val tab = createTab(
             url = "https://mozilla.org",
-            title = "Mozilla"
+            title = "Mozilla",
         )
         store.dispatch(TabListAction.AddTabAction(tab)).joinBlocking()
         store.dispatch(TabListAction.SelectTabAction(tab.id)).joinBlocking()
@@ -103,8 +102,9 @@ class RecentTabControllerTest {
         }
 
         val inProgressMediaTab = createTab(
-            url = "mediaUrl", id = "2",
-            lastMediaAccessState = LastMediaAccessState("https://mozilla.com", 123, true)
+            url = "mediaUrl",
+            id = "2",
+            lastMediaAccessState = LastMediaAccessState("https://mozilla.com", 123, true),
         )
 
         store.dispatch(TabListAction.AddTabAction(inProgressMediaTab)).joinBlocking()
@@ -133,7 +133,7 @@ class RecentTabControllerTest {
         verify {
             controller.dismissSearchDialogIfDisplayed()
             navController.navigate(
-                match<NavDirections> { it.actionId == R.id.action_global_tabsTrayFragment }
+                match<NavDirections> { it.actionId == R.id.action_global_tabsTrayFragment },
             )
         }
         verify(exactly = 0) {
@@ -157,27 +157,10 @@ class RecentTabControllerTest {
             controller.dismissSearchDialogIfDisplayed()
             navController.navigateUp()
             navController.navigate(
-                match<NavDirections> { it.actionId == R.id.action_global_tabsTrayFragment }
+                match<NavDirections> { it.actionId == R.id.action_global_tabsTrayFragment },
             )
         }
 
         assertNotNull(RecentTabs.showAllClicked.testGetValue())
-    }
-
-    @Test
-    fun `WHEN handleRecentSearchGroupClicked is called THEN navigate to the tabsTrayFragment and record the correct metric`() {
-        assertNull(SearchTerms.jumpBackInGroupTapped.testGetValue())
-
-        controller.handleRecentSearchGroupClicked("1")
-
-        verify {
-            navController.navigate(
-                match<NavDirections> {
-                    it.actionId == R.id.action_global_tabsTrayFragment &&
-                        it.arguments["focusGroupTabId"] == "1"
-                }
-            )
-        }
-        assertNotNull(SearchTerms.jumpBackInGroupTapped.testGetValue())
     }
 }

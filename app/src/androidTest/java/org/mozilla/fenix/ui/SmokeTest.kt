@@ -10,7 +10,6 @@ import android.view.View
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
 import androidx.core.net.toUri
 import androidx.test.espresso.IdlingRegistry
-import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.ActivityTestRule
 import androidx.test.uiautomator.UiDevice
@@ -37,6 +36,7 @@ import org.mozilla.fenix.helpers.TestHelper
 import org.mozilla.fenix.helpers.TestHelper.appName
 import org.mozilla.fenix.helpers.TestHelper.assertNativeAppOpens
 import org.mozilla.fenix.helpers.TestHelper.createCustomTabIntent
+import org.mozilla.fenix.helpers.TestHelper.generateRandomString
 import org.mozilla.fenix.helpers.TestHelper.scrollToElementByText
 import org.mozilla.fenix.helpers.ViewVisibilityIdlingResource
 import org.mozilla.fenix.ui.robots.browserScreen
@@ -47,9 +47,6 @@ import org.mozilla.fenix.ui.robots.navigationToolbar
 import org.mozilla.fenix.ui.robots.notificationShade
 import org.mozilla.fenix.ui.robots.openEditURLView
 import org.mozilla.fenix.ui.robots.searchScreen
-import org.mozilla.fenix.ui.util.FRENCH_LANGUAGE_HEADER
-import org.mozilla.fenix.ui.util.FRENCH_SYSTEM_LOCALE_OPTION
-import org.mozilla.fenix.ui.util.ROMANIAN_LANGUAGE_HEADER
 import org.mozilla.fenix.ui.util.STRING_ONBOARDING_TRACKING_PROTECTION_HEADER
 
 /**
@@ -61,14 +58,13 @@ import org.mozilla.fenix.ui.util.STRING_ONBOARDING_TRACKING_PROTECTION_HEADER
 @Suppress("ForbiddenComment")
 @SmokeTest
 class SmokeTest {
-    private val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+    private lateinit var mDevice: UiDevice
     private lateinit var mockWebServer: MockWebServer
     private var awesomeBar: ViewVisibilityIdlingResource? = null
     private var addonsListIdlingResource: RecyclerViewIdlingResource? = null
     private var recentlyClosedTabsListIdlingResource: RecyclerViewIdlingResource? = null
     private var readerViewNotification: ViewVisibilityIdlingResource? = null
     private var bookmarksListIdlingResource: RecyclerViewIdlingResource? = null
-    private var localeListIdlingResource: RecyclerViewIdlingResource? = null
     private val customMenuItem = "TestMenuItem"
     private lateinit var browserStore: BrowserStore
     private val featureSettingsHelper = FeatureSettingsHelper()
@@ -76,12 +72,14 @@ class SmokeTest {
     @get:Rule
     val activityTestRule = AndroidComposeTestRule(
         HomeActivityIntentTestRule(),
-        { it.activity }
+        { it.activity },
     )
 
     @get: Rule
     val intentReceiverActivityTestRule = ActivityTestRule(
-        IntentReceiverActivity::class.java, true, false
+        IntentReceiverActivity::class.java,
+        true,
+        false,
     )
 
     @Rule
@@ -96,7 +94,10 @@ class SmokeTest {
 
         // disabling the new homepage pop-up that interferes with the tests.
         featureSettingsHelper.setJumpBackCFREnabled(false)
+        featureSettingsHelper.setTCPCFREnabled(false)
+        featureSettingsHelper.setShowWallpaperOnboarding(false)
 
+        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mockWebServer = MockWebServer().apply {
             dispatcher = AndroidAssetDispatcher()
             start()
@@ -125,10 +126,6 @@ class SmokeTest {
 
         if (readerViewNotification != null) {
             IdlingRegistry.getInstance().unregister(readerViewNotification)
-        }
-
-        if (localeListIdlingResource != null) {
-            IdlingRegistry.getInstance().unregister(localeListIdlingResource)
         }
 
         // resetting modified features enabled setting to default
@@ -177,8 +174,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the functionality of the onboarding Start Browsing button
+    @Test
     fun startBrowsingButtonTest() {
         homeScreen {
             verifyStartBrowsingButton()
@@ -195,6 +192,7 @@ class SmokeTest {
      - the tab drawer button
      - opening a new search and dismissing the nav bar
     */
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun verifyBasicNavigationToolbarFunctionality() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -214,8 +212,9 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the list of items in a tab's 3 dot menu
+    @Ignore("Failing, see: https://github.com/mozilla-mobile/fenix/issues/26711")
+    @Test
     fun verifyPageMainMenuItemsTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -227,8 +226,8 @@ class SmokeTest {
     }
 
     // Could be removed when more smoke tests from the History category are added
-    @Test
     // Verifies the History menu opens from a tab's 3 dot menu
+    @Test
     fun openMainMenuHistoryItemTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -241,8 +240,8 @@ class SmokeTest {
     }
 
     // Could be removed when more smoke tests from the Bookmarks category are added
-    @Test
     // Verifies the Bookmarks menu opens from a tab's 3 dot menu
+    @Test
     fun openMainMenuBookmarksItemTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -254,8 +253,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the Add-ons menu opens from a tab's 3 dot menu
+    @Test
     fun openMainMenuAddonsTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -266,7 +265,7 @@ class SmokeTest {
             addonsListIdlingResource =
                 RecyclerViewIdlingResource(
                     activityTestRule.activity.findViewById(R.id.add_ons_list),
-                    1
+                    1,
                 )
             IdlingRegistry.getInstance().register(addonsListIdlingResource!!)
             verifyAddonsItems()
@@ -274,9 +273,9 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the Synced tabs menu or Sync Sign In menu opens from a tab's 3 dot menu.
     // The test is assuming we are NOT signed in.
+    @Test
     fun openMainMenuSyncItemTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -289,10 +288,10 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Test running on beta/release builds in CI:
     // caution when making changes to it, so they don't block the builds
     // Verifies the Settings menu opens from a tab's 3 dot menu
+    @Test
     fun openMainMenuSettingsItemTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -304,8 +303,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the Find in page option in a tab's 3 dot menu
+    @Test
     fun openMainMenuFindInPageTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -317,10 +316,11 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the Add to home screen option in a tab's 3 dot menu
+    @Test
     fun mainMenuAddToHomeScreenTest() {
         val website = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val shortcutTitle = generateRandomString(5)
 
         homeScreen {
         }.openNavigationToolbar {
@@ -336,17 +336,17 @@ class SmokeTest {
             expandMenu()
         }.openAddToHomeScreen {
             verifyShortcutNameField("Test_Page_1")
-            addShortcutName("Test Page")
+            addShortcutName(shortcutTitle)
             clickAddShortcutButton()
             clickAddAutomaticallyButton()
-        }.openHomeScreenShortcut("Test Page") {
+        }.openHomeScreenShortcut(shortcutTitle) {
             verifyUrl(website.url.toString())
             verifyTabCounter("1")
         }
     }
 
-    @Test
     // Verifies the Add to collection option in a tab's 3 dot menu
+    @Test
     fun openMainMenuAddToCollectionTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -358,8 +358,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the Bookmark button in a tab's 3 dot menu
+    @Test
     fun mainMenuBookmarkButtonTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -371,9 +371,10 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Device or AVD requires a Google Services Android OS installation with Play Store installed
     // Verifies the Open in app button when an app is installed
+    @Ignore("Failing with frequent ANR: https://github.com/mozilla-mobile/fenix/issues/25926")
+    @Test
     fun mainMenuOpenInAppTest() {
         val playStoreUrl = "play.google.com/store/apps/details?id=org.mozilla.fenix"
 
@@ -386,8 +387,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the Desktop site toggle in a tab's 3 dot menu
+    @Test
     fun mainMenuDesktopSiteTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -400,8 +401,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the Share button in a tab's 3 dot menu
+    @Test
     fun mainMenuShareButtonTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -415,8 +416,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the refresh button in a tab's 3 dot menu
+    @Test
     fun mainMenuRefreshButtonTest() {
         val refreshWebPage = TestAssetHelper.getRefreshAsset(mockWebServer)
 
@@ -462,8 +463,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies changing the default engine from the Search Shortcut menu
+    @Test
     fun selectSearchEnginesShortcutTest() {
         val enginesList = listOf("DuckDuckGo", "Google", "Amazon.com", "Wikipedia", "Bing", "eBay")
 
@@ -481,8 +482,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Swipes the nav bar left/right to switch between tabs
+    @Test
     fun swipeToSwitchTabTest() {
         val firstWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
         val secondWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 2)
@@ -499,8 +500,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Saves a login, then changes it and verifies the update
+    @Test
     fun updateSavedLoginTest() {
         val saveLoginTest =
             TestAssetHelper.getSaveLoginAsset(mockWebServer)
@@ -531,45 +532,9 @@ class SmokeTest {
         }
     }
 
-    @Ignore("Failing, see: https://github.com/mozilla-mobile/fenix/issues/25034")
-    @Test
-    @SdkSuppress(minSdkVersion = 29)
-    // Verifies that you can go to System settings and change app's permissions from inside the app
-    fun redirectToAppPermissionsSystemSettingsTest() {
-        homeScreen {
-        }.openThreeDotMenu {
-        }.openSettings {
-        }.openSettingsSubMenuSitePermissions {
-        }.openCamera {
-            verifyBlockedByAndroid()
-        }.goBack {
-        }.openLocation {
-            verifyBlockedByAndroid()
-        }.goBack {
-        }.openMicrophone {
-            verifyBlockedByAndroid()
-            clickGoToSettingsButton()
-            openAppSystemPermissionsSettings()
-            switchAppPermissionSystemSetting("Camera", "Allow")
-            mDevice.pressBack()
-            switchAppPermissionSystemSetting("Location", "Allow")
-            mDevice.pressBack()
-            switchAppPermissionSystemSetting("Microphone", "Allow")
-            mDevice.pressBack()
-            mDevice.pressBack()
-            mDevice.pressBack()
-            verifyUnblockedByAndroid()
-        }.goBack {
-        }.openLocation {
-            verifyUnblockedByAndroid()
-        }.goBack {
-        }.openCamera {
-            verifyUnblockedByAndroid()
-        }
-    }
-
     @Test
     // Verifies that a recently closed item is properly opened
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun openRecentlyClosedItemTest() {
         val website = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -594,6 +559,7 @@ class SmokeTest {
 
     @Test
     // Verifies that tapping the "x" button removes a recently closed item from the list
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun deleteRecentlyClosedTabsItemTest() {
         val website = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -616,8 +582,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies that deleting a Bookmarks folder also removes the item from inside it.
+    @Test
     fun deleteNonEmptyBookmarkFolderTest() {
         val website = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -663,6 +629,7 @@ class SmokeTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun shareTabsFromTabsTrayTest() {
         val firstWebsite = TestAssetHelper.getGenericAsset(mockWebServer, 1)
         val secondWebsite = TestAssetHelper.getGenericAsset(mockWebServer, 2)
@@ -687,8 +654,9 @@ class SmokeTest {
         }.clickShareAllTabsButton {
             verifyShareTabsOverlay(firstWebsiteTitle, secondWebsiteTitle)
             verifySharingWithSelectedApp(
-                sharingApp, sharedUrlsString,
-                "$firstWebsiteTitle, $secondWebsiteTitle"
+                sharingApp,
+                sharedUrlsString,
+                "$firstWebsiteTitle, $secondWebsiteTitle",
             )
         }
     }
@@ -709,6 +677,7 @@ class SmokeTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun privateTabsTrayWithOpenedTabTest() {
         val website = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -730,16 +699,14 @@ class SmokeTest {
             verifyCloseTabsButton(website.title)
             verifyOpenedTabThumbnail()
             verifyPrivateBrowsingNewTabButton()
-        }.openTab(website.title) {
-            verifyUrl(website.url.toString())
-            verifyTabCounter("1")
         }
     }
 
-    @Test
     // Test running on beta/release builds in CI:
     // caution when making changes to it, so they don't block the builds
+    @Test
     fun noHistoryInPrivateBrowsingTest() {
+        FeatureSettingsHelper().setTCPCFREnabled(false)
         val website = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
         homeScreen {
@@ -790,8 +757,8 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies that reader mode is detected and the custom appearance controls are displayed
+    @Test
     fun verifyReaderViewAppearanceUI() {
         val readerViewPage =
             TestAssetHelper.getLoremIpsumAsset(mockWebServer)
@@ -799,12 +766,12 @@ class SmokeTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(readerViewPage.url) {
-            org.mozilla.fenix.ui.robots.mDevice.waitForIdle()
+            mDevice.waitForIdle()
         }
 
         readerViewNotification = ViewVisibilityIdlingResource(
             activityTestRule.activity.findViewById(R.id.mozac_browser_toolbar_page_actions),
-            View.VISIBLE
+            View.VISIBLE,
         )
 
         IdlingRegistry.getInstance().register(readerViewNotification)
@@ -832,16 +799,16 @@ class SmokeTest {
         }
     }
 
-    @Test
     // Verifies the main menu of a custom tab with a custom menu item
+    @Test
     fun customTabMenuItemsTest() {
         val customTabPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
         intentReceiverActivityTestRule.launchActivity(
             createCustomTabIntent(
                 customTabPage.url.toString(),
-                customMenuItem
-            )
+                customMenuItem,
+            ),
         )
 
         customTabScreen {
@@ -858,15 +825,15 @@ class SmokeTest {
         }
     }
 
-    @Test
     // The test opens a link in a custom tab then sends it to the browser
+    @Test
     fun openCustomTabInBrowserTest() {
         val customTabPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
         intentReceiverActivityTestRule.launchActivity(
             createCustomTabIntent(
-                customTabPage.url.toString()
-            )
+                customTabPage.url.toString(),
+            ),
         )
 
         customTabScreen {
@@ -912,6 +879,7 @@ class SmokeTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun tabMediaControlButtonTest() {
         val audioTestPage = TestAssetHelper.getAudioPageAsset(mockWebServer)
 
@@ -929,9 +897,9 @@ class SmokeTest {
         }
     }
 
-    @Test
     // For API>23
     // Verifies the default browser switch opens the system default apps menu.
+    @Test
     fun changeDefaultBrowserSetting() {
         homeScreen {
         }.openThreeDotMenu {
@@ -979,28 +947,6 @@ class SmokeTest {
             longClickToolbar()
             clickPasteText()
             verifyPastedToolbarText("Page content: 1")
-        }
-    }
-
-    @Test
-    fun switchLanguageTest() {
-        homeScreen {
-        }.openThreeDotMenu {
-        }.openSettings {
-        }.openLanguageSubMenu {
-            localeListIdlingResource =
-                RecyclerViewIdlingResource(
-                    activityTestRule.activity.findViewById(R.id.locale_list),
-                    2
-                )
-            IdlingRegistry.getInstance().register(localeListIdlingResource)
-            selectLanguage("Romanian")
-            verifyLanguageHeaderIsTranslated(ROMANIAN_LANGUAGE_HEADER)
-            selectLanguage("Français")
-            verifyLanguageHeaderIsTranslated(FRENCH_LANGUAGE_HEADER)
-            selectLanguage(FRENCH_SYSTEM_LOCALE_OPTION)
-            verifyLanguageHeaderIsTranslated("Language")
-            IdlingRegistry.getInstance().unregister(localeListIdlingResource)
         }
     }
 

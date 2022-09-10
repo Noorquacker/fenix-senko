@@ -25,10 +25,8 @@ import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.By.text
-import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObjectNotFoundException
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
@@ -45,6 +43,7 @@ import org.mozilla.fenix.helpers.Constants.RETRY_COUNT
 import org.mozilla.fenix.helpers.SessionLoadedIdlingResource
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTime
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTimeLong
+import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.packageName
 import org.mozilla.fenix.helpers.TestHelper.waitForObjects
 import org.mozilla.fenix.helpers.click
@@ -61,7 +60,6 @@ class BrowserRobot {
     }
 
     fun verifyUrl(url: String) {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         sessionLoadedIdlingResource = SessionLoadedIdlingResource()
 
         runWithIdleRes(sessionLoadedIdlingResource) {
@@ -69,8 +67,8 @@ class BrowserRobot {
                 mDevice.findObject(
                     UiSelector()
                         .resourceId("$packageName:id/mozac_browser_toolbar_url_view")
-                        .textContains(url.replace("http://", ""))
-                ).waitForExists(waitingTime)
+                        .textContains(url.replace("http://", "")),
+                ).waitForExists(waitingTime),
             )
         }
     }
@@ -97,14 +95,52 @@ class BrowserRobot {
 
         mDevice.waitNotNull(
             Until.findObject(By.res("$packageName:id/engineView")),
-            waitingTime
+            waitingTime,
         )
 
         runWithIdleRes(sessionLoadedIdlingResource) {
             assertTrue(
                 "Page didn't load or doesn't contain the expected text",
-                mDevice.findObject(UiSelector().textContains(expectedText)).waitForExists(waitingTime)
+                mDevice.findObject(UiSelector().textContains(expectedText)).waitForExists(waitingTime),
             )
+        }
+    }
+
+    /* Verifies the information displayed on the about:cache page */
+    fun verifyNetworkCacheIsEmpty(storage: String) {
+        val memorySection = mDevice.findObject(UiSelector().description(storage))
+
+        val gridView =
+            if (storage == "memory") {
+                memorySection.getFromParent(
+                    UiSelector()
+                        .className("android.widget.GridView")
+                        .index(2),
+                )
+            } else {
+                memorySection.getFromParent(
+                    UiSelector()
+                        .className("android.widget.GridView")
+                        .index(4),
+                )
+            }
+
+        val cacheSizeInfo =
+            gridView.getChild(
+                UiSelector().text("Number of entries:"),
+            ).getFromParent(
+                UiSelector().text("0"),
+            )
+
+        for (i in 1..RETRY_COUNT) {
+            try {
+                assertTrue(cacheSizeInfo.waitForExists(waitingTime))
+                break
+            } catch (e: AssertionError) {
+                browserScreen {
+                }.openThreeDotMenu {
+                }.refreshPage { }
+            }
         }
     }
 
@@ -113,7 +149,7 @@ class BrowserRobot {
             mDevice.findObject(
                 UiSelector()
                     .resourceId("$packageName:id/counter_text")
-                    .text(expectedText)
+                    .text(expectedText),
             )
         assertTrue(counter.waitForExists(waitingTime))
     }
@@ -124,46 +160,48 @@ class BrowserRobot {
         assertTrue(
             mDevice.findObject(
                 UiSelector()
-                    .textContains(expectedText)
-            ).waitForExists(waitingTime)
+                    .textContains(expectedText),
+            ).waitForExists(waitingTime),
         )
     }
 
     fun verifyLinkContextMenuItems(containsURL: Uri) {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(
             Until.findObject(By.textContains(containsURL.toString())),
-            waitingTime
+            waitingTime,
         )
         mDevice.waitNotNull(
             Until.findObject(text("Open link in new tab")),
-            waitingTime
+            waitingTime,
         )
         mDevice.waitNotNull(
             Until.findObject(text("Open link in private tab")),
-            waitingTime
+            waitingTime,
         )
         mDevice.waitNotNull(Until.findObject(text("Copy link")), waitingTime)
         mDevice.waitNotNull(Until.findObject(text("Share link")), waitingTime)
     }
 
     fun verifyLinkImageContextMenuItems(containsURL: Uri) {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(Until.findObject(By.textContains(containsURL.toString())))
         mDevice.waitNotNull(
-            Until.findObject(text("Open link in new tab")), waitingTime
+            Until.findObject(text("Open link in new tab")),
+            waitingTime,
         )
         mDevice.waitNotNull(
-            Until.findObject(text("Open link in private tab")), waitingTime
+            Until.findObject(text("Open link in private tab")),
+            waitingTime,
         )
         mDevice.waitNotNull(Until.findObject(text("Copy link")), waitingTime)
         mDevice.waitNotNull(Until.findObject(text("Share link")), waitingTime)
         mDevice.waitNotNull(
-            Until.findObject(text("Open image in new tab")), waitingTime
+            Until.findObject(text("Open image in new tab")),
+            waitingTime,
         )
         mDevice.waitNotNull(Until.findObject(text("Save image")), waitingTime)
         mDevice.waitNotNull(
-            Until.findObject(text("Copy image location")), waitingTime
+            Until.findObject(text("Copy image location")),
+            waitingTime,
         )
     }
 
@@ -183,22 +221,22 @@ class BrowserRobot {
     }
 
     fun verifyNoLinkImageContextMenuItems(containsURL: Uri) {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(Until.findObject(By.textContains(containsURL.toString())))
         mDevice.waitNotNull(
             Until.findObject(text("Open image in new tab")),
-            waitingTime
+            waitingTime,
         )
         mDevice.waitNotNull(Until.findObject(text("Save image")), waitingTime)
         mDevice.waitNotNull(
-            Until.findObject(text("Copy image location")), waitingTime
+            Until.findObject(text("Copy image location")),
+            waitingTime,
         )
     }
 
     fun verifyNotificationDotOnMainMenu() {
         assertTrue(
             mDevice.findObject(UiSelector().resourceId("$packageName:id/notification_dot"))
-                .waitForExists(waitingTime)
+                .waitForExists(waitingTime),
         )
     }
 
@@ -214,10 +252,9 @@ class BrowserRobot {
     }
 
     fun clickContextOpenLinkInNewTab() {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(
             Until.findObject(text("Open link in new tab")),
-            waitingTime
+            waitingTime,
         )
 
         val menuOpenInNewTab = mDevice.findObject(text("Open link in new tab"))
@@ -225,10 +262,9 @@ class BrowserRobot {
     }
 
     fun clickContextOpenLinkInPrivateTab() {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(
             Until.findObject(text("Open link in private tab")),
-            waitingTime
+            waitingTime,
         )
 
         val menuOpenInPrivateTab = mDevice.findObject(text("Open link in private tab"))
@@ -236,7 +272,6 @@ class BrowserRobot {
     }
 
     fun clickContextCopyLink() {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(Until.findObject(text("Copy link")), waitingTime)
 
         val menuCopyLink = mDevice.findObject(text("Copy link"))
@@ -244,7 +279,6 @@ class BrowserRobot {
     }
 
     fun clickContextShareLink(url: Uri) {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(Until.findObject(text("Share link")), waitingTime)
 
         val menuShareLink = mDevice.findObject(text("Share link"))
@@ -263,21 +297,20 @@ class BrowserRobot {
                                 IntentMatchers.hasType("text/plain"),
                                 IntentMatchers.hasExtra(
                                     Intent.EXTRA_TEXT,
-                                    url.toString()
-                                )
-                            )
-                        )
-                    )
-                )
-            )
+                                    url.toString(),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
         )
     }
 
     fun clickContextCopyImageLocation() {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(
             Until.findObject(text("Copy image location")),
-            waitingTime
+            waitingTime,
         )
 
         val menuCopyImageLocation = mDevice.findObject(text("Copy image location"))
@@ -285,10 +318,9 @@ class BrowserRobot {
     }
 
     fun clickContextOpenImageNewTab() {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(
             Until.findObject(text("Open image in new tab")),
-            waitingTime
+            waitingTime,
         )
 
         val menuOpenImageNewTab = mDevice.findObject(text("Open image in new tab"))
@@ -296,7 +328,6 @@ class BrowserRobot {
     }
 
     fun clickContextSaveImage() {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(Until.findObject(text("Save image")), waitingTime)
 
         val menuSaveImage = mDevice.findObject(text("Save image"))
@@ -437,7 +468,7 @@ class BrowserRobot {
         val switchButton =
             mDevice.findObject(
                 UiSelector()
-                    .resourceId("$packageName:id/snackbar_btn")
+                    .resourceId("$packageName:id/snackbar_btn"),
             )
         switchButton.waitForExists(waitingTime)
         switchButton.clickAndWaitForNewWindow(waitingTime)
@@ -461,8 +492,8 @@ class BrowserRobot {
     fun saveLoginFromPrompt(optionToSaveLogin: String) {
         mDevice.waitForObjects(
             mDevice.findObject(
-                UiSelector().resourceId("$packageName:id/feature_prompt_login_fragment")
-            )
+                UiSelector().resourceId("$packageName:id/feature_prompt_login_fragment"),
+            ),
         )
         mDevice.findObject(text(optionToSaveLogin)).click()
     }
@@ -471,14 +502,14 @@ class BrowserRobot {
         val passwordField = mDevice.findObject(
             UiSelector()
                 .resourceId("password")
-                .className(EditText::class.java)
+                .className(EditText::class.java),
         )
         try {
             passwordField.waitForExists(waitingTime)
             mDevice.findObject(
                 By
                     .res("password")
-                    .clazz(EditText::class.java)
+                    .clazz(EditText::class.java),
             ).click()
             passwordField.clearTextField()
             passwordField.text = password
@@ -498,7 +529,7 @@ class BrowserRobot {
             mDevice.findObject(
                 By
                     .res("password")
-                    .clazz(EditText::class.java)
+                    .clazz(EditText::class.java),
             ).click()
             passwordField.clearTextField()
             passwordField.text = password
@@ -566,7 +597,7 @@ class BrowserRobot {
     fun clickTabCrashedRestoreButton() {
         assertTrue(
             mDevice.findObject(UiSelector().resourceId("$packageName:id/restoreTabButton"))
-                .waitForExists(waitingTime)
+                .waitForExists(waitingTime),
         )
 
         val tabCrashRestoreButton = mDevice.findObject(UiSelector().resourceIdMatches("$packageName:id/restoreTabButton"))
@@ -611,25 +642,55 @@ class BrowserRobot {
         }
     }
 
+    fun clickStreetAddressTextBox() {
+        streetAddressTextBox().waitForExists(waitingTime)
+        streetAddressTextBox().click()
+    }
+
+    fun clickSelectAddressButton() {
+        selectAddressButton.waitForExists(waitingTime)
+        selectAddressButton.clickAndWaitForNewWindow(waitingTime)
+    }
+
+    fun clickCardNumberTextBox() {
+        creditCardNumberTextBox().waitForExists(waitingTime)
+        creditCardNumberTextBox().click()
+    }
+
+    fun clickSelectCreditCardButton() {
+        selectCreditCardButton.waitForExists(waitingTime)
+        selectCreditCardButton.clickAndWaitForNewWindow(waitingTime)
+    }
+
     fun clickLoginSuggestion(userName: String) {
         val loginSuggestion =
             mDevice.findObject(
                 UiSelector()
                     .textContains(userName)
-                    .resourceId("$packageName:id/username")
+                    .resourceId("$packageName:id/username"),
             )
 
         loginSuggestion.click()
     }
 
+    fun clickAddressSuggestion(streetName: String) {
+        addressSuggestion(streetName).waitForExists(waitingTime)
+        addressSuggestion(streetName).click()
+    }
+
+    fun clickCreditCardSuggestion(creditCardNumber: String) {
+        creditCardSuggestion(creditCardNumber).waitForExists(waitingTime)
+        creditCardSuggestion(creditCardNumber).click()
+    }
+
     fun verifySuggestedUserName(userName: String) {
         mDevice.findObject(
             UiSelector()
-                .resourceId("$packageName:id/mozac_feature_login_multiselect_expand")
+                .resourceId("$packageName:id/mozac_feature_login_multiselect_expand"),
         ).waitForExists(waitingTime)
 
         assertTrue(
-            mDevice.findObject(UiSelector().textContains(userName)).waitForExists(waitingTime)
+            mDevice.findObject(UiSelector().textContains(userName)).waitForExists(waitingTime),
         )
     }
 
@@ -657,6 +718,16 @@ class BrowserRobot {
         assertTrue(userNameTextBox.text.equals(userName))
     }
 
+    fun verifyAutofilledAddress(streetAddress: String) {
+        mDevice.waitForObjects(streetAddressTextBox(streetAddress))
+        assertTrue(streetAddressTextBox(streetAddress).waitForExists(waitingTime))
+    }
+
+    fun verifyAutofilledCreditCard(creditCardNumber: String) {
+        mDevice.waitForObjects(creditCardNumberTextBox(creditCardNumber))
+        assertTrue(creditCardNumberTextBox(creditCardNumber).waitForExists(waitingTime))
+    }
+
     fun verifyPrefilledPWALoginCredentials(userName: String, shortcutTitle: String) {
         mDevice.waitForIdle(waitingTime)
 
@@ -678,8 +749,8 @@ class BrowserRobot {
         assertTrue(
             mDevice.findObject(
                 UiSelector()
-                    .resourceId("$packageName:id/feature_prompt_login_fragment")
-            ).waitForExists(waitingTime)
+                    .resourceId("$packageName:id/feature_prompt_login_fragment"),
+            ).waitForExists(waitingTime),
         )
     }
 
@@ -688,8 +759,8 @@ class BrowserRobot {
             try {
                 assertTrue(
                     mDevice.findObject(
-                        UiSelector().textContains(state)
-                    ).waitForExists(waitingTimeLong)
+                        UiSelector().textContains(state),
+                    ).waitForExists(waitingTimeLong),
                 )
 
                 break
@@ -708,14 +779,19 @@ class BrowserRobot {
         }
     }
 
+    fun clickSetCookiesButton() {
+        val setCookiesButton = mDevice.findObject(UiSelector().resourceId("setCookies"))
+        setCookiesButton.waitForExists(waitingTimeLong)
+        setCookiesButton.click()
+    }
+
     class Transition {
-        private val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         private fun threeDotButton() = onView(
             allOf(
                 ViewMatchers.withContentDescription(
-                    "Menu"
-                )
-            )
+                    "Menu",
+                ),
+            ),
         )
 
         fun openThreeDotMenu(interact: ThreeDotMenuMainRobot.() -> Unit): ThreeDotMenuMainRobot.Transition {
@@ -737,7 +813,7 @@ class BrowserRobot {
 
         fun openTabDrawer(interact: TabDrawerRobot.() -> Unit): TabDrawerRobot.Transition {
             mDevice.findObject(
-                UiSelector().descriptionContains("Tap to switch tabs.")
+                UiSelector().descriptionContains("Tap to switch tabs."),
             ).waitForExists(waitingTime)
 
             tabsCounter().click()
@@ -765,7 +841,7 @@ class BrowserRobot {
         fun goToHomescreen(interact: HomeScreenRobot.() -> Unit): HomeScreenRobot.Transition {
             assertTrue(
                 mDevice.findObject(UiSelector().description("Home screen"))
-                    .waitForExists(waitingTime)
+                    .waitForExists(waitingTime),
             )
 
             onView(withContentDescription("Home screen"))
@@ -774,7 +850,7 @@ class BrowserRobot {
 
             assertTrue(
                 mDevice.findObject(UiSelector().resourceId("$packageName:id/homeLayout"))
-                    .waitForExists(waitingTime)
+                    .waitForExists(waitingTime),
             )
 
             HomeScreenRobot().interact()
@@ -791,7 +867,7 @@ class BrowserRobot {
         fun clickTabCrashedCloseButton(interact: HomeScreenRobot.() -> Unit): HomeScreenRobot.Transition {
             assertTrue(
                 mDevice.findObject(UiSelector().resourceId("$packageName:id/closeTabButton"))
-                    .waitForExists(waitingTime)
+                    .waitForExists(waitingTime),
             )
 
             val tabCrashedCloseButton = mDevice.findObject(text("Close tab"))
@@ -804,7 +880,7 @@ class BrowserRobot {
         }
 
         fun clickShareSelectedText(interact: ShareOverlayRobot.() -> Unit): ShareOverlayRobot.Transition {
-            val shareTextButton = org.mozilla.fenix.ui.robots.mDevice.findObject(By.textContains("Share"))
+            val shareTextButton = mDevice.findObject(By.textContains("Share"))
             shareTextButton.click()
 
             ShareOverlayRobot().interact()
@@ -816,7 +892,7 @@ class BrowserRobot {
 
             assertTrue(
                 "$title download link not found",
-                downloadLink.waitForExists(waitingTime)
+                downloadLink.waitForExists(waitingTime),
             )
             downloadLink.click()
 
@@ -855,6 +931,7 @@ class BrowserRobot {
             // Test page used for testing permissions located at https://mozilla-mobile.github.io/testapp/permissions
             notificationButton.waitForExists(waitingTime)
             notificationButton.click()
+            mDevice.waitForObjects(mDevice.findObject(UiSelector().textContains("Allow to send notifications?")))
 
             SitePermissionsRobot().interact()
             return SitePermissionsRobot.Transition()
@@ -909,15 +986,49 @@ private fun mediaPlayerPlayButton() =
     mDevice.findObject(
         UiSelector()
             .className("android.widget.Button")
-            .text("Play")
+            .text("Play"),
     )
 
 private var progressBar =
     mDevice.findObject(
-        UiSelector().resourceId("$packageName:id/mozac_browser_toolbar_progress")
+        UiSelector().resourceId("$packageName:id/mozac_browser_toolbar_progress"),
     )
 
 private val suggestedLogins = mDevice.findObject(UiSelector().resourceId("$packageName:id/loginSelectBar"))
+private val selectAddressButton = mDevice.findObject(UiSelector().resourceId("$packageName:id/select_address_header"))
+private val selectCreditCardButton = mDevice.findObject(UiSelector().resourceId("$packageName:id/select_credit_card_header"))
+
+private fun addressSuggestion(streetName: String) =
+    mDevice.findObject(
+        UiSelector()
+            .resourceId("$packageName:id/address_name")
+            .textContains(streetName),
+    )
+
+private fun streetAddressTextBox(streetAddress: String = "") =
+    mDevice.findObject(
+        UiSelector()
+            .resourceId("streetAddress")
+            .textContains(streetAddress)
+            .className("android.widget.EditText")
+            .packageName("$packageName"),
+    )
+
+private fun creditCardNumberTextBox(creditCardNumber: String = "") =
+    mDevice.findObject(
+        UiSelector()
+            .resourceId("cardNumber")
+            .textContains(creditCardNumber)
+            .className("android.widget.EditText")
+            .packageName("$packageName"),
+    )
+
+private fun creditCardSuggestion(creditCardNumber: String) =
+    mDevice.findObject(
+        UiSelector()
+            .resourceId("$packageName:id/credit_card_number")
+            .textContains(creditCardNumber),
+    )
 
 // Permissions test page elements & prompts
 // Test page used located at https://mozilla-mobile.github.io/testapp/permissions
@@ -938,7 +1049,7 @@ val userNameTextBox =
         UiSelector()
             .resourceId("username")
             .className("android.widget.EditText")
-            .packageName("$packageName")
+            .packageName("$packageName"),
     )
 
 private val submitLoginButton =
@@ -947,7 +1058,7 @@ private val submitLoginButton =
             .resourceId("submit")
             .textContains("Submit Query")
             .className("android.widget.Button")
-            .packageName("$packageName")
+            .packageName("$packageName"),
     )
 
 val passwordTextBox =
@@ -955,5 +1066,5 @@ val passwordTextBox =
         UiSelector()
             .resourceId("password")
             .className("android.widget.EditText")
-            .packageName("$packageName")
+            .packageName("$packageName"),
     )

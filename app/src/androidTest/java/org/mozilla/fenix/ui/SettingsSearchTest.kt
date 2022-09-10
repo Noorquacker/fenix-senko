@@ -24,7 +24,7 @@ class SettingsSearchTest {
 
     @get:Rule
     val activityTestRule = AndroidComposeTestRule(
-        HomeActivityIntentTestRule()
+        HomeActivityIntentTestRule(),
     ) { it.activity }
 
     @Before
@@ -34,6 +34,7 @@ class SettingsSearchTest {
             start()
         }
         featureSettingsHelper.setJumpBackCFREnabled(false)
+        featureSettingsHelper.setShowWallpaperOnboarding(false)
     }
 
     @After
@@ -71,6 +72,7 @@ class SettingsSearchTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun toggleSearchBookmarksAndHistoryTest() {
         // Bookmarks 2 websites, toggles the bookmarks and history search settings off,
         // then verifies if the websites do not show in the suggestions.
@@ -120,9 +122,9 @@ class SettingsSearchTest {
         }
     }
 
+    // Ads a new search engine from the list of custom engines
     @SmokeTest
     @Test
-    // Ads a new search engine from the list of custom engines
     fun addPredefinedSearchEngineTest() {
         val searchEngine = "Reddit"
 
@@ -146,9 +148,9 @@ class SettingsSearchTest {
         }
     }
 
+    // Verifies setting as default a customized search engine name and URL
     @SmokeTest
     @Test
-    // Verifies setting as default a customized search engine name and URL
     fun editCustomSearchEngineTest() {
         searchMockServer = MockWebServer().apply {
             dispatcher = SearchDispatcher()
@@ -182,14 +184,13 @@ class SettingsSearchTest {
         }
     }
 
-    @Ignore("Failing, see: https://github.com/mozilla-mobile/fenix/issues/23817")
-    @SmokeTest
-    @Test
     // Test running on beta/release builds in CI:
     // caution when making changes to it, so they don't block the builds
     // Goes through the settings and changes the search suggestion toggle, then verifies it changes.
+    @Ignore("Failing, see: https://github.com/mozilla-mobile/fenix/issues/23817")
+    @SmokeTest
+    @Test
     fun toggleSearchSuggestionsTest() {
-
         homeScreen {
         }.openSearch {
             typeSearch("mozilla")

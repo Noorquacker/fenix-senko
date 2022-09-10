@@ -129,7 +129,7 @@ fun FaviconListItem(
                     )
                 }
             }
-        }
+        },
     )
 }
 
@@ -184,7 +184,7 @@ fun IconListItem(
                     )
                 }
             }
-        }
+        },
     )
 }
 
@@ -215,7 +215,7 @@ private fun ListItem(
             true -> Modifier.clickable { onClick() }
             false -> Modifier
         }.then(
-            Modifier.defaultMinSize(minHeight = LIST_ITEM_HEIGHT)
+            Modifier.defaultMinSize(minHeight = LIST_ITEM_HEIGHT),
         ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -250,7 +250,7 @@ private fun ListItem(
 @Composable
 @Preview(name = "TextListItem", uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun TextListItemPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             TextListItem(label = "Label only")
         }
@@ -260,11 +260,11 @@ private fun TextListItemPreview() {
 @Composable
 @Preview(name = "TextListItem with a description", uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun TextListItemWithDescriptionPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             TextListItem(
                 label = "Label + description",
-                description = "Description text"
+                description = "Description text",
             )
         }
     }
@@ -273,7 +273,7 @@ private fun TextListItemWithDescriptionPreview() {
 @Composable
 @Preview(name = "TextListItem with a right icon", uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun TextListItemWithIconPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             TextListItem(
                 label = "Label + right icon",
@@ -288,7 +288,7 @@ private fun TextListItemWithIconPreview() {
 @Composable
 @Preview(name = "IconListItem", uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun IconListItemPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             IconListItem(
                 label = "Left icon list item",
@@ -302,10 +302,10 @@ private fun IconListItemPreview() {
 @Composable
 @Preview(
     name = "IconListItem with an interactable right icon",
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 private fun IconListItemWithRightIconPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             IconListItem(
                 label = "Left icon list item + right icon",
@@ -322,10 +322,10 @@ private fun IconListItemWithRightIconPreview() {
 @Composable
 @Preview(
     name = "FaviconListItem with a right icon and onClicks",
-    uiMode = Configuration.UI_MODE_NIGHT_YES
+    uiMode = Configuration.UI_MODE_NIGHT_YES,
 )
 private fun FaviconListItemPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             FaviconListItem(
                 label = "Favicon + right icon + clicks",

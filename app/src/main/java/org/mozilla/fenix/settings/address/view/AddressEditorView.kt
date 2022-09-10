@@ -16,6 +16,7 @@ import mozilla.components.browser.state.search.RegionState
 import mozilla.components.concept.storage.UpdatableAddressFields
 import mozilla.components.support.ktx.android.view.hideKeyboard
 import mozilla.components.support.ktx.android.view.showKeyboard
+import org.mozilla.fenix.GleanMetrics.Addresses
 import org.mozilla.fenix.R
 import org.mozilla.fenix.databinding.FragmentAddressEditorBinding
 import org.mozilla.fenix.ext.placeCursorAtEnd
@@ -38,7 +39,7 @@ class AddressEditorView(
     private val binding: FragmentAddressEditorBinding,
     private val interactor: AddressEditorInteractor,
     private val region: RegionState? = RegionState.Default,
-    private val address: Address? = null
+    private val address: Address? = null,
 ) {
 
     /**
@@ -92,18 +93,20 @@ class AddressEditorView(
             organization = "",
             streetAddress = binding.streetAddressInput.text.toString(),
             addressLevel3 = "",
-            addressLevel2 = "",
+            addressLevel2 = binding.cityInput.text.toString(),
             addressLevel1 = binding.subregionDropDown.selectedItem.toString(),
             postalCode = binding.zipInput.text.toString(),
             country = binding.countryDropDown.selectedItem.toString().toCountryCode(),
             tel = binding.phoneInput.text.toString(),
-            email = binding.emailInput.text.toString()
+            email = binding.emailInput.text.toString(),
         )
 
         if (address != null) {
             interactor.onUpdateAddress(address.guid, addressFields)
+            Addresses.updated.add()
         } else {
             interactor.onSaveAddress(addressFields)
+            Addresses.saved.add()
         }
     }
 
@@ -115,6 +118,7 @@ class AddressEditorView(
             }
             setPositiveButton(R.string.addressess_confirm_dialog_ok_button) { _, _ ->
                 interactor.onDeleteAddress(guid)
+                Addresses.deleted.add()
             }
             create()
         }.show()
@@ -124,7 +128,7 @@ class AddressEditorView(
         val adapter = ArrayAdapter(
             binding.root.context,
             android.R.layout.simple_spinner_dropdown_item,
-            countries.values.map { it.displayName }
+            countries.values.map { it.displayName },
         )
 
         val selectedCountryKey = (address?.country ?: region?.home).takeIf {
@@ -143,7 +147,7 @@ class AddressEditorView(
                 parent: AdapterView<*>?,
                 view: View?,
                 position: Int,
-                id: Long
+                id: Long,
             ) {
                 val newCountryKey = binding.countryDropDown.selectedItem.toString().toCountryCode()
                 countries[newCountryKey]?.let { country ->
@@ -167,7 +171,7 @@ class AddressEditorView(
         val adapter = ArrayAdapter(
             binding.root.context,
             android.R.layout.simple_spinner_dropdown_item,
-            country.subregions
+            country.subregions,
         )
 
         val selectedPosition = subregions.indexOf(selectedSubregion).takeIf { it > 0 } ?: 0

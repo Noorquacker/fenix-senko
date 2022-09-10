@@ -26,10 +26,10 @@ import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.withHint
 import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.withParent
+import androidx.test.espresso.matcher.ViewMatchers.withParentIndex
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
@@ -52,6 +52,7 @@ import org.mozilla.fenix.helpers.TestAssetHelper.waitingTimeShort
 import org.mozilla.fenix.helpers.TestHelper.appContext
 import org.mozilla.fenix.helpers.TestHelper.appName
 import org.mozilla.fenix.helpers.TestHelper.getStringResource
+import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.packageName
 import org.mozilla.fenix.helpers.TestHelper.scrollToElementByText
 import org.mozilla.fenix.helpers.click
@@ -91,14 +92,14 @@ class HomeScreenRobot {
         if (isEnabled) {
             assertTrue(
                 mDevice.findObject(
-                    UiSelector().resourceId("$packageName:id/wallpaperImageView")
-                ).waitForExists(waitingTimeShort)
+                    UiSelector().resourceId("$packageName:id/wallpaperImageView"),
+                ).waitForExists(waitingTimeShort),
             )
         } else {
             assertFalse(
                 mDevice.findObject(
-                    UiSelector().resourceId("$packageName:id/wallpaperImageView")
-                ).waitForExists(waitingTimeShort)
+                    UiSelector().resourceId("$packageName:id/wallpaperImageView"),
+                ).waitForExists(waitingTimeShort),
             )
         }
 
@@ -138,7 +139,9 @@ class HomeScreenRobot {
 
     fun verifyExistingTopSitesList() = assertExistingTopSitesList()
     fun verifyNotExistingTopSitesList(title: String) = assertNotExistingTopSitesList(title)
+    fun verifyNotExistingSponsoredTopSitesList() = assertSponsoredTopSitesNotDisplayed()
     fun verifyExistingTopSitesTabs(title: String) = assertExistingTopSitesTabs(title)
+    fun verifyExistingSponsoredTopSitesTabs(position: Int) = assertSponsoredTopSiteIsDisplayed(position)
     fun verifyTopSiteContextMenuItems() = assertTopSiteContextMenuItems()
 
     fun verifyJumpBackInSectionIsDisplayed() = assertJumpBackInSectionIsDisplayed()
@@ -156,13 +159,13 @@ class HomeScreenRobot {
             assertTrue(
                 mDevice.findObject(UiSelector().text(searchTerm))
                     .getFromParent(UiSelector().text("$groupSize sites"))
-                    .waitForExists(waitingTimeShort)
+                    .waitForExists(waitingTimeShort),
             )
         } else {
             assertFalse(
                 mDevice.findObject(UiSelector().text(searchTerm))
                     .getFromParent(UiSelector().text("$groupSize sites"))
-                    .waitForExists(waitingTimeShort)
+                    .waitForExists(waitingTimeShort),
             )
         }
     }
@@ -173,12 +176,12 @@ class HomeScreenRobot {
             assertTrue(
                 mDevice.findObject(UiSelector().text("""Your search for "$searchTerm""""))
                     .getFromParent(UiSelector().textContains("$groupSize sites"))
-                    .waitForExists(waitingTimeShort)
+                    .waitForExists(waitingTimeShort),
             )
         } else {
             assertFalse(
                 mDevice.findObject(UiSelector().text("""Your search for "$searchTerm""""))
-                    .waitForExists(waitingTimeShort)
+                    .waitForExists(waitingTimeShort),
             )
         }
     }
@@ -205,7 +208,6 @@ class HomeScreenRobot {
         onView(withId(R.id.sessionControlRecyclerView)).perform(ViewActions.swipeDown())
 
     fun verifySnackBarText(expectedText: String) {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mDevice.waitNotNull(findObject(By.text(expectedText)), waitingTime)
     }
 
@@ -213,19 +215,86 @@ class HomeScreenRobot {
         onView(
             allOf(
                 withId(R.id.snackbar_btn),
-                withText(expectedText)
-            )
+                withText(expectedText),
+            ),
         ).click()
     }
 
     fun clickFirefoxLogo() = homepageWordmark.click()
 
+    fun verifyThoughtProvokingStories(enabled: Boolean) {
+        if (enabled) {
+            scrollToElementByText(getStringResource(R.string.pocket_stories_header_1))
+            assertTrue(
+                mDevice.findObject(
+                    UiSelector()
+                        .textContains(
+                            getStringResource(R.string.pocket_stories_header_1),
+                        ),
+                ).waitForExists(waitingTime),
+            )
+        } else {
+            homeScreenList().scrollToEnd(LISTS_MAXSWIPES)
+            assertFalse(
+                mDevice.findObject(
+                    UiSelector()
+                        .textContains(
+                            getStringResource(R.string.pocket_stories_header_1),
+                        ),
+                ).waitForExists(waitingTime),
+            )
+        }
+    }
+
+    fun verifyStoriesByTopic(enabled: Boolean) {
+        if (enabled) {
+            scrollToElementByText(getStringResource(R.string.pocket_stories_categories_header))
+            assertTrue(
+                mDevice.findObject(
+                    UiSelector()
+                        .textContains(
+                            getStringResource(R.string.pocket_stories_categories_header),
+                        ),
+                ).waitForExists(waitingTime),
+            )
+        } else {
+            homeScreenList().scrollToEnd(LISTS_MAXSWIPES)
+            assertFalse(
+                mDevice.findObject(
+                    UiSelector()
+                        .textContains(
+                            getStringResource(R.string.pocket_stories_categories_header),
+                        ),
+                ).waitForExists(waitingTime),
+            )
+        }
+    }
+
+    fun verifyCustomizeHomepageButton(enabled: Boolean) {
+        if (enabled) {
+            scrollToElementByText(getStringResource(R.string.browser_menu_customize_home_1))
+            assertTrue(
+                mDevice.findObject(
+                    UiSelector()
+                        .textContains("Customize homepage"),
+                ).waitForExists(waitingTime),
+            )
+        } else {
+            homeScreenList().scrollToEnd(LISTS_MAXSWIPES)
+            assertFalse(
+                mDevice.findObject(
+                    UiSelector()
+                        .textContains("Customize homepage"),
+                ).waitForExists(waitingTime),
+            )
+        }
+    }
+
     class Transition {
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
         fun openTabDrawer(interact: TabDrawerRobot.() -> Unit): TabDrawerRobot.Transition {
             mDevice.findObject(
-                UiSelector().descriptionContains("open tab. Tap to switch tabs.")
+                UiSelector().descriptionContains("open tab. Tap to switch tabs."),
             ).waitForExists(waitingTime)
 
             tabsCounter().click()
@@ -240,7 +309,7 @@ class HomeScreenRobot {
             try {
                 mDevice.waitNotNull(
                     Until.findObject(By.res("$packageName:id/menuButton")),
-                    waitingTime
+                    waitingTime,
                 )
             } catch (e: AssertionError) {
                 mDevice.pressBack()
@@ -274,7 +343,7 @@ class HomeScreenRobot {
         fun togglePrivateBrowsingMode() {
             mDevice.findObject(UiSelector().resourceId("$packageName:id/privateBrowsingButton"))
                 .waitForExists(
-                    waitingTime
+                    waitingTime,
                 )
             privateBrowsingButton()
                 .perform(click())
@@ -285,7 +354,7 @@ class HomeScreenRobot {
             for (i in 1..5) {
                 mDevice.findObject(UiSelector().resourceId("$packageName:id/privateBrowsingButton"))
                     .waitForExists(
-                        waitingTime
+                        waitingTime,
                     )
 
                 privateBrowsingButton()
@@ -311,13 +380,13 @@ class HomeScreenRobot {
 
         fun openContextMenuOnTopSitesWithTitle(
             title: String,
-            interact: HomeScreenRobot.() -> Unit
+            interact: HomeScreenRobot.() -> Unit,
         ): Transition {
             onView(withId(R.id.top_sites_list)).perform(
                 actionOnItem<RecyclerView.ViewHolder>(
                     hasDescendant(withText(title)),
-                    ViewActions.longClick()
-                )
+                    ViewActions.longClick(),
+                ),
             )
 
             HomeScreenRobot().interact()
@@ -326,10 +395,10 @@ class HomeScreenRobot {
 
         fun openTopSiteTabWithTitle(
             title: String,
-            interact: BrowserRobot.() -> Unit
+            interact: BrowserRobot.() -> Unit,
         ): BrowserRobot.Transition {
             onView(withId(R.id.top_sites_list)).perform(
-                actionOnItem<RecyclerView.ViewHolder>(hasDescendant(withText(title)), click())
+                actionOnItem<RecyclerView.ViewHolder>(hasDescendant(withText(title)), click()),
             )
 
             BrowserRobot().interact()
@@ -359,7 +428,7 @@ class HomeScreenRobot {
 
         fun deleteTopSiteFromHistory(interact: HomeScreenRobot.() -> Unit): Transition {
             mDevice.findObject(
-                UiSelector().resourceId("$packageName:id/simple_text")
+                UiSelector().resourceId("$packageName:id/simple_text"),
             ).waitForExists(waitingTime)
             deleteFromHistory.click()
 
@@ -380,8 +449,8 @@ class HomeScreenRobot {
             mDevice.findObject(
                 UiSelector()
                     .textContains(
-                        getStringResource(R.string.private_browsing_common_myths)
-                    )
+                        getStringResource(R.string.private_browsing_common_myths),
+                    ),
             ).also { it.click() }
 
             BrowserRobot().interact()
@@ -396,7 +465,9 @@ class HomeScreenRobot {
         }
 
         fun expandCollection(title: String, rule: ComposeTestRule, interact: CollectionRobot.() -> Unit): CollectionRobot.Transition {
+            homeScreenList().waitForExists(waitingTime)
             homeScreenList().scrollToEnd(LISTS_MAXSWIPES)
+
             collectionTitle(title, rule)
                 .assertIsDisplayed()
                 .performClick()
@@ -413,6 +484,19 @@ class HomeScreenRobot {
             HistoryRobot().interact()
             return HistoryRobot.Transition()
         }
+
+        fun openCustomizeHomepage(interact: SettingsSubMenuHomepageRobot.() -> Unit): SettingsSubMenuHomepageRobot.Transition {
+            homeScreenList().scrollToEnd(LISTS_MAXSWIPES)
+            mDevice.findObject(
+                UiSelector()
+                    .textContains(
+                        "Customize homepage",
+                    ),
+            ).clickAndWaitForNewWindow(waitingTime)
+
+            SettingsSubMenuHomepageRobot().interact()
+            return SettingsSubMenuHomepageRobot.Transition()
+        }
     }
 }
 
@@ -421,21 +505,19 @@ fun homeScreen(interact: HomeScreenRobot.() -> Unit): HomeScreenRobot.Transition
     return HomeScreenRobot.Transition()
 }
 
-val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-
 private fun homeScreenList() =
     UiScrollable(
         UiSelector()
             .resourceId("$packageName:id/sessionControlRecyclerView")
-            .scrollable(true)
+            .scrollable(true),
     ).setAsVerticalList()
 
 private fun assertKeyboardVisibility(isExpectedToBeVisible: Boolean) =
     Assert.assertEquals(
         isExpectedToBeVisible,
-        UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        mDevice
             .executeShellCommand("dumpsys input_method | grep mInputShown")
-            .contains("mInputShown=true")
+            .contains("mInputShown=true"),
     )
 
 private fun navigationToolbar() = mDevice.findObject(UiSelector().resourceId("$packageName:id/toolbar"))
@@ -479,9 +561,9 @@ private fun assertNoCollectionsText() =
         withText(
             containsString(
                 "Collect the things that matter to you.\n" +
-                    "Group together similar searches, sites, and tabs for quick access later."
-            )
-        )
+                    "Group together similar searches, sites, and tabs for quick access later.",
+            ),
+        ),
     ).check(matches(isDisplayed()))
 
 private fun assertHomeComponent() =
@@ -511,14 +593,14 @@ private fun assertWelcomeHeader() =
     assertTrue(
         mDevice.findObject(
             UiSelector().textContains(
-                getStringResource(R.string.onboarding_header)
-            )
-        ).waitForExists(waitingTime)
+                getStringResource(R.string.onboarding_header_2),
+            ),
+        ).waitForExists(waitingTime),
     )
 
 private fun assertStartSyncHeader() {
     scrollToElementByText(STRING_ONBOARDING_ACCOUNT_SIGN_IN_HEADER)
-    onView(allOf(withText(R.string.onboarding_account_sign_in_header_1)))
+    onView(allOf(withText(R.string.onboarding_account_sign_in_header)))
         .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
 }
 private fun assertAccountsSignInButton() =
@@ -582,33 +664,33 @@ private fun assertAlwaysPrivacyText() {
     onView(
         allOf(
             withText(
-                "$appName automatically stops companies from secretly following you around the web."
-            )
-        )
+                "Featuring Total Cookie Protection to stop trackers from using cookies to stalk you across sites.",
+            ),
+        ),
     )
         .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
 }
 
 private fun assertYourPrivacyHeader() {
-    scrollToElementByText("Your privacy")
-    onView(allOf(withText("Your privacy")))
+    scrollToElementByText("You control your data")
+    onView(allOf(withText("You control your data")))
         .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
 }
 
 private fun assertYourPrivacyText() {
-    scrollToElementByText("Your privacy")
+    scrollToElementByText("You control your data")
     onView(
         allOf(
             withText(
-                "We’ve designed $appName to give you control over what you share online and what you share with us."
-            )
-        )
+                "Firefox gives you control over what you share online and what you share with us.",
+            ),
+        ),
     )
         .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
 }
 
 private fun assertPrivacyNoticeButton() {
-    scrollToElementByText("Your privacy")
+    scrollToElementByText("You control your data")
     onView(allOf(withText("Read our privacy notice")))
         .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
 }
@@ -641,9 +723,9 @@ private fun assertPrivateSessionMessage() =
         mDevice.findObject(
             UiSelector()
                 .textContains(
-                    getStringResource(R.string.private_browsing_common_myths)
-                )
-        ).waitForExists(waitingTime)
+                    getStringResource(R.string.private_browsing_common_myths),
+                ),
+        ).waitForExists(waitingTime),
     )
 
 private fun collectionTitle(title: String, rule: ComposeTestRule) =
@@ -657,12 +739,27 @@ private fun assertExistingTopSitesTabs(title: String) {
     mDevice.findObject(
         UiSelector()
             .resourceId("$packageName:id/top_site_title")
-            .textContains(title)
+            .textContains(title),
     ).waitForExists(waitingTime)
 
     onView(allOf(withId(R.id.top_sites_list)))
         .check(matches(hasDescendant(withText(title))))
         .check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
+}
+
+private fun assertSponsoredTopSiteIsDisplayed(position: Int) {
+    mDevice.findObject(
+        UiSelector()
+            .resourceId("$packageName:id/top_site_subtitle")
+            .textContains(getStringResource(R.string.top_sites_sponsored_label)),
+    ).waitForExists(waitingTime)
+
+    onView(
+        allOf(
+            withText(R.string.top_sites_sponsored_label),
+            withParent(withParentIndex(position - 1)),
+        ),
+    ).check(matches(withEffectiveVisibility(Visibility.VISIBLE)))
 }
 
 private fun assertNotExistingTopSitesList(title: String) {
@@ -673,16 +770,24 @@ private fun assertNotExistingTopSitesList(title: String) {
         .check(matches(not(hasItem(hasDescendant(withText(title))))))
 }
 
-private fun assertTopSiteContextMenuItems() {
-    val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+private fun assertSponsoredTopSitesNotDisplayed() {
+    assertFalse(
+        mDevice.findObject(
+            UiSelector()
+                .resourceId("$packageName:id/top_site_subtitle")
+                .textContains(getStringResource(R.string.top_sites_sponsored_label)),
+        ).waitForExists(waitingTime),
+    )
+}
 
+private fun assertTopSiteContextMenuItems() {
     mDevice.waitNotNull(
         findObject(By.text("Open in private tab")),
-        waitingTime
+        waitingTime,
     )
     mDevice.waitNotNull(
         findObject(By.text("Remove")),
-        waitingTime
+        waitingTime,
     )
 }
 
@@ -706,7 +811,7 @@ private fun jumpBackInSection() =
     mDevice.findObject(UiSelector().textContains(getStringResource(R.string.recent_tabs_header)))
 
 private fun recentBookmarksSection() =
-    mDevice.findObject(UiSelector().textContains(getStringResource(R.string.recent_bookmarks_title)))
+    mDevice.findObject(UiSelector().textContains(getStringResource(R.string.recently_saved_title)))
 
 private fun startBrowsingButton(): UiObject {
     val startBrowsingButton = mDevice.findObject(UiSelector().resourceId("$packageName:id/finish_button"))
@@ -721,12 +826,12 @@ val deleteFromHistory =
     onView(
         allOf(
             withId(R.id.simple_text),
-            withText(R.string.delete_from_history)
-        )
+            withText(R.string.delete_from_history),
+        ),
     ).inRoot(RootMatchers.isPlatformPopup())
 
 private val recentlyVisitedList =
     UiScrollable(
         UiSelector()
-            .className("android.widget.HorizontalScrollView")
+            .className("android.widget.HorizontalScrollView"),
     ).setAsHorizontalList()

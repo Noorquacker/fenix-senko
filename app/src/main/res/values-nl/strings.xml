@@ -43,9 +43,9 @@
 
     <!-- Home - Recently saved bookmarks -->
     <!-- Title for the home screen section with recently saved bookmarks. -->
-    <string name="recent_bookmarks_title">Recente bladwijzers</string>
-    <!-- Title for the button which navigates the user to show all of their saved bookmarks. -->
-    <string moz:removedIn="101" name="recently_saved_show_all" tools:ignore="UnusedResources">Alles tonen</string>
+    <string moz:RemovedIn="106" name="recent_bookmarks_title" tools:ignore="UnusedResources">Recente bladwijzers</string>
+    <!-- Title for the home screen section with recently saved bookmarks. -->
+    <string name="recently_saved_title">Onlangs opgeslagen</string>
     <!-- Content description for the button which navigates the user to show all of their saved bookmarks. -->
     <string name="recently_saved_show_all_content_description_2">Alle opgeslagen bladwijzers tonen</string>
 
@@ -80,6 +80,15 @@
     <string name="open_in_app_cfr_positive_button_text">Naar instellingen</string>
     <!-- Text for the negative action button -->
     <string name="open_in_app_cfr_negative_button_text">Sluiten</string>
+
+    <!-- Content description for close button used in "contextual feature recommendation" (CFR) popups -->
+    <string name="cfr_dismiss_button_default_content_description">Sluiten</string>
+
+    <!-- Total cookie protection "contextual feature recommendation" (CFR) -->
+    <!-- Text for the message displayed in the contextual feature recommendation popup promoting the total cookie protection feature. -->
+    <string name="tcp_cfr_message">Onze krachtigste privacyfunctie tot nu toe isoleert cross-sitetrackers.</string>
+    <!-- Text displayed that links to website containing documentation about the "Total cookie protection" feature. -->
+    <string name="tcp_cfr_learn_more">Meer info over Totale cookiebescherming</string>
 
     <!-- Text for the info dialog when camera permissions have been denied but user tries to access a camera feature. -->
     <string name="camera_permissions_needed_message">Cameratoegang vereist. Ga naar uw Android-instellingen, tik op machtigingen en tik op toestaan.</string>
@@ -128,16 +137,18 @@
     <string name="recent_tabs_show_all_content_description_2">Knop Alle recente tabbladen tonen</string>
     <!-- Title for showing a group item in the 'Jump back in' section of the new tab
         The first parameter is the search term that the user used. (for example: your search for "cat")-->
-    <string name="recent_tabs_search_term">Uw zoekopdracht naar ‘%1$s’</string>
+    <string moz:RemovedIn="105" name="recent_tabs_search_term" tools:ignore="UnusedResources">Uw zoekopdracht naar ‘%1$s’</string>
 
     <!-- Text for the number of tabs in a group in the 'Jump back in' section of the new tab
         %d is a placeholder for the number of sites in the group. This number will always be more than one. -->
-    <string name="recent_tabs_search_term_count_2">%d websites</string>
+    <string moz:RemovedIn="105" name="recent_tabs_search_term_count_2" tools:ignore="UnusedResources">%d websites</string>
 
     <!-- Text for button in synced tab card that opens synced tabs tray -->
     <string name="recent_tabs_see_all_synced_tabs_button_text">Alle gesynchroniseerde tabbladen bekijken</string>
     <!-- Accessibility description for device icon used for recent synced tab -->
     <string name="recent_tabs_synced_device_icon_content_description">Gesynchroniseerd apparaat</string>
+    <!-- Text for the dropdown menu to remove a recent synced tab from the homescreen -->
+    <string name="recent_synced_tab_menu_item_remove">Verwijderen</string>
     <!-- Text for the menu button to remove a grouped highlight from the user's browsing history
          in the Recently visited section -->
     <string name="recent_tab_menu_item_remove">Verwijderen</string>
@@ -256,25 +267,45 @@
 
     <!-- Home onboarding -->
     <!-- Onboarding home screen dialog title text. The first parameter is the name of the application.-->
-    <string name="onboarding_home_screen_title_3">Wat is er nieuw in %1$s</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_title_3" tools:ignore="UnusedResources">Wat is er nieuw in %1$s</string>
     <!-- Onboarding home screen dialog description text. -->
-    <string name="onboarding_home_screen_description_2">Het is nu eenvoudiger om verder te gaan waar u was gebleven.</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_description_2" tools:ignore="UnusedResources">Het is nu eenvoudiger om verder te gaan waar u was gebleven.</string>
     <!-- Onboarding home screen dialog title text for the home section. The first parameter is the name of the application.-->
-    <string name="onboarding_home_screen_section_home_title_3">Gepersonaliseerde %1$s-startpagina</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_section_home_title_3" tools:ignore="UnusedResources">Gepersonaliseerde %1$s-startpagina</string>
     <!-- Onboarding home screen dialog description text for the home section. -->
-    <string name="onboarding_home_screen_section_home_description_2">Spring naar uw open tabbladen, bladwijzers en navigatiegeschiedenis.</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_section_home_description_2" tools:ignore="UnusedResources">Spring naar uw open tabbladen, bladwijzers en navigatiegeschiedenis.</string>
     <!-- Onboarding home screen dialog description text for the tab tray section. -->
-    <string name="onboarding_home_screen_section_cleaner_tab_tray_title_2">Nette, geordende tabbladen</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_section_cleaner_tab_tray_title_2" tools:ignore="UnusedResources">Nette, geordende tabbladen</string>
     <!-- Onboarding home screen dialog description text for the tab tray section. -->
-    <string name="onboarding_home_screen_section_cleaner_tab_tray_description_2">Verwijder tabbladrommel met een verbeterde opmaak en automatisch sluitende tabbladen.</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_section_cleaner_tab_tray_description_2" tools:ignore="UnusedResources">Verwijder tabbladrommel met een verbeterde opmaak en automatisch sluitende tabbladen.</string>
     <!-- Onboarding home screen dialog description text for the history section. -->
-    <string name="onboarding_home_screen_section_useful_history_title_2">Recente zoekopdrachten</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_section_useful_history_title_2" tools:ignore="UnusedResources">Recente zoekopdrachten</string>
 
     <!-- Onboarding home screen dialog description text for the history section. -->
-    <string name="onboarding_home_screen_section_useful_history_description_2">Bekijk uw laatste zoekopdrachten opnieuw vanaf uw startpagina en tabbladen.</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_section_useful_history_description_2" tools:ignore="UnusedResources">Bekijk uw laatste zoekopdrachten opnieuw vanaf uw startpagina en tabbladen.</string>
 
     <!-- Onboarding home screen popup dialog, shown on top of the Jump back in section. Firefox is intentionally hardcoded. -->
-    <string name="onboarding_home_screen_jump_back_contextual_hint" tools:ignore="UnusedResources">Uw gepersonaliseerde Firefox-startpagina maakt het nu eenvoudiger om verder te gaan waar u was gebleven. Vind uw recente tabbladen, bladwijzers en zoekresultaten.</string>
+    <string moz:RemovedIn="106" name="onboarding_home_screen_jump_back_contextual_hint" tools:ignore="UnusedResources">Uw gepersonaliseerde Firefox-startpagina maakt het nu eenvoudiger om verder te gaan waar u was gebleven. Vind uw recente tabbladen, bladwijzers en zoekresultaten.</string>
+
+    <!-- Onboarding home screen popup dialog, shown on top of the Jump back in section. -->
+    <string name="onboarding_home_screen_jump_back_contextual_hint_2">Maak kennis met uw gepersonaliseerde startpagina. Recente tabbladen, bladwijzers en zoekresultaten worden hier weergegeven.</string>
+    <!-- Home onboarding dialog welcome screen title text. -->
+    <string name="onboarding_home_welcome_title">Welkom bij een onafhankelijk internet</string>
+    <!-- Home onboarding dialog welcome screen description text. -->
+    <string name="onboarding_home_welcome_description">Meer kleuren. Betere privacy. Dezelfde toewijding aan mensen boven winst.</string>
+    <!-- Home onboarding dialog sign into sync screen title text. -->
+    <string name="onboarding_home_sync_title_2">Spring van telefoon naar laptop en terug</string>
+    <!-- Home onboarding dialog sign into sync screen description text. -->
+    <string name="onboarding_home_sync_description">Ga verder waar u was gebleven met tabbladen van andere apparaten nu op uw startpagina.</string>
+    <!-- Text for the button to continue the onboarding on the home onboarding dialog. -->
+    <string name="onboarding_home_get_started_button">Beginnen</string>
+    <!-- Text for the button to navigate to the sync sign in screen on the home onboarding dialog. -->
+    <string name="onboarding_home_sign_in_button">Aanmelden</string>
+    <!-- Text for the button to skip the onboarding on the home onboarding dialog. -->
+    <string name="onboarding_home_skip_button">Overslaan</string>
+
+    <!-- Onboarding home screen sync popup dialog message, shown on top of Recent Synced Tabs in the Jump back in section. -->
+    <string name="sync_cfr_message">Uw tabbladen worden gesynchroniseerd! Ga verder waar u was gebleven op uw andere apparaat.</string>
 
     <!-- Search Widget -->
     <!-- Content description for searching with a widget. The first parameter is the name of the application.-->
@@ -364,7 +395,9 @@
     <!-- Preference for settings related to visual options -->
     <string name="preferences_customize">Aanpassen</string>
     <!-- Preference description for banner about signing in -->
-    <string name="preferences_sign_in_description">Synchroniseer bladwijzers, geschiedenis en meer met uw Firefox-account</string>
+    <string moz:RemovedIn="104" name="preferences_sign_in_description" tools:ignore="UnusedResources">Synchroniseer bladwijzers, geschiedenis en meer met uw Firefox-account</string>
+    <!-- Preference description for banner about signing in -->
+    <string name="preferences_sign_in_description_2">Meld u aan om uw tabbladen, bladwijzers, wachtwoorden en meer te synchroniseren.</string>
     <!-- Preference shown instead of account display name while account profile information isn't available yet. -->
     <string name="preferences_account_default_name">Firefox-account</string>
     <!-- Preference text for account title when there was an error syncing FxA -->
@@ -450,11 +483,11 @@
     <string name="wallpaper_updated_snackbar_action">Weergeven</string>
 
     <!-- Label for switch which toggles the "tap-to-switch" behavior on home screen logo -->
-    <string name="wallpaper_tap_to_change_switch_label_1">Uw achtergrond wijzigen door op het Firefox-startpaginalogo te tikken</string>
+    <string moz:removedIn="105" name="wallpaper_tap_to_change_switch_label_1" tools:ignore="UnusedResources">Uw achtergrond wijzigen door op het Firefox-startpaginalogo te tikken</string>
 
     <!-- This is the accessibility content description for the wallpapers functionality. Users are
     able to tap on the app logo in the home screen and can switch to different wallpapers by tapping. -->
-    <string name="wallpaper_logo_content_description">Firefox-logo – de achtergrond, de knop wijzigen</string>
+    <string moz:removedIn="105" name="wallpaper_logo_content_description" tools:ignore="UnusedResources">Firefox-logo – de achtergrond, de knop wijzigen</string>
 
     <!-- Add-on Installation from AMO-->
     <!-- Error displayed when user attempts to install an add-on from AMO (addons.mozilla.org) that is not supported -->
@@ -537,7 +570,9 @@
 
     <!-- Turn On Sync Preferences -->
     <!-- Header of the Turn on Sync preference view -->
-    <string name="preferences_sync">Sync inschakelen</string>
+    <string moz:RemovedIn="104" name="preferences_sync" tools:ignore="UnusedResources">Sync inschakelen</string>
+    <!-- Header of the Sync and save your data preference view -->
+    <string name="preferences_sync_2">Uw gegevens synchroniseren en opslaan</string>
     <!-- Preference for reconnecting to FxA sync -->
     <string name="preferences_sync_sign_in_to_reconnect">Aanmelden om opnieuw te verbinden</string>
     <!-- Preference for removing FxA account -->
@@ -628,9 +663,9 @@
     <!-- Option for a grid tab view -->
     <string name="tab_view_grid">Raster</string>
     <!-- Option for search term tab groups -->
-    <string name="tab_view_search_term_tab_groups">Groepen zoeken</string>
+    <string moz:RemovedIn="105" name="tab_view_search_term_tab_groups" tools:ignore="UnusedResources">Groepen zoeken</string>
     <!-- Summary text for search term tab groups -->
-    <string name="tab_view_search_term_tab_groups_summary">Gerelateerde websites groeperen</string>
+    <string moz:RemovedIn="105" name="tab_view_search_term_tab_groups_summary" tools:ignore="UnusedResources">Gerelateerde websites groeperen</string>
     <!-- Title of preference that allows a user to auto close tabs after a specified amount of time -->
     <string name="preferences_close_tabs">Tabbladen sluiten</string>
     <!-- Option for auto closing tabs that will never auto close tabs, always allows user to manually close tabs -->
@@ -736,8 +771,6 @@
     <string name="open_tabs_menu">Menu Open tabbladen</string>
     <!-- Open tabs menu item to save tabs to collection -->
     <string name="tabs_menu_save_to_collection1">Tabbladen in collectie opslaan</string>
-    <!-- Content description (not visible, for screen readers etc.): Opens the tab menu when pressed -->
-    <string moz:RemovedIn="103" name="tab_menu" tools:ignore="UnusedResources">Tabbladmenu</string>
     <!-- Text for the menu button to delete a collection -->
     <string name="collection_delete">Collectie verwijderen</string>
     <!-- Text for the menu button to rename a collection -->
@@ -759,7 +792,7 @@
     <string name="pwa_site_controls_title_private">%1$s (privémodus)</string>
 
     <!-- Title text for the normal tabs header in the tabs tray which are not part of any tab grouping. -->
-    <string name="tab_tray_header_title_1">Overige tabbladen</string>
+    <string moz:removedIn="104" name="tab_tray_header_title_1" tools:ignore="UnusedResources">Overige tabbladen</string>
 
     <!-- History -->
     <!-- Text for the button to search all history -->
@@ -789,9 +822,16 @@
     <string name="history_empty_message">Geen geschiedenis hier</string>
 
     <!-- Text for the button inside History screen that opens Synced History screen. History that is coming from other devices -->
-    <string name="history_synced_from_other_devices">Gesynchroniseerd vanaf andere apparaten</string>
+    <string moz:removedIn="105" name="history_synced_from_other_devices" tools:ignore="UnusedResources">Gesynchroniseerd vanaf andere apparaten</string>
     <!-- The page title for browsing history coming from other devices. -->
-    <string name="history_from_other_devices">Vanaf andere apparaten</string>
+    <string moz:removedIn="105" name="history_from_other_devices" tools:ignore="UnusedResources">Vanaf andere apparaten</string>
+
+    <!-- The synced history sign in dialog message -->
+    <string moz:removedIn="105" name="history_sign_in_message" tools:ignore="UnusedResources">Meld u aan om van uw andere apparaten gesynchroniseerde geschiedenis te bekijken.</string>
+    <!-- The synced history sign in dialog button text -->
+    <string moz:removedIn="105" name="history_sign_in_button" tools:ignore="UnusedResources">Aanmelden</string>
+    <!-- The synced history sign in dialog create a new account link -->
+    <string moz:removedIn="105" name="history_sign_in_create_account" tools:ignore="UnusedResources"><![CDATA[<u>Of maak een Firefox-account om te beginnen met synchroniseren</u>]]></string>
 
     <!-- Downloads -->
     <!-- Text for the snackbar to confirm that multiple downloads items have been removed -->
@@ -1082,8 +1122,6 @@
     <string name="snackbar_tabs_closed">Tabbladen gesloten</string>
     <!-- Text shown in snackbar when user bookmarks a list of tabs -->
     <string name="snackbar_message_bookmarks_saved">Bladwijzers opgeslagen!</string>
-    <!-- Text shown in snackbar when user adds a site to top sites -->
-    <string moz:RemovedIn="101" name="snackbar_added_to_top_sites" tools:ignore="UnusedResources">Toegevoegd aan topwebsites!</string>
     <!-- Text shown in snackbar when user adds a site to shortcuts -->
     <string name="snackbar_added_to_shortcuts">Toegevoegd aan snelkoppelingen!</string>
     <!-- Text shown in snackbar when user closes a private tab -->
@@ -1163,7 +1201,18 @@
     <string name="delete_browsing_data_on_quit_action">Afsluiten</string>
 
     <!-- Dialog message to the user asking to delete browsing data. -->
-    <string name="delete_browsing_data_prompt_message">Hierdoor worden al uw navigatiegegevens verwijderd.</string>
+    <string moz:removedIn="104" name="delete_browsing_data_prompt_message" tools:ignore="UnusedResources">Hierdoor worden al uw navigatiegegevens verwijderd.</string>
+    <!-- Title text of a delete browsing data dialog. -->
+    <string name="delete_history_prompt_title">Te verwijderen tijdsperiode</string>
+    <!-- Body text of a delete browsing data dialog. -->
+    <string name="delete_history_prompt_body">Verwijdert geschiedenis (inclusief vanaf andere apparaten gesynchroniseerde geschiedenis), cookies en andere navigatiegegevens.</string>
+    <!-- Radio button in the delete browsing data dialog to delete history items for the last hour. -->
+    <string name="delete_history_prompt_button_last_hour">Laatste uur</string>
+    <!-- Radio button in the delete browsing data dialog to delete history items for today and yesterday. -->
+    <string name="delete_history_prompt_button_today_and_yesterday">Vandaag en gisteren</string>
+    <!-- Radio button in the delete browsing data dialog to delete all history. -->
+    <string name="delete_history_prompt_button_everything">Alles</string>
+
     <!-- Dialog message to the user asking to delete browsing data. Parameter will be replaced by app name. -->
     <string name="delete_browsing_data_prompt_message_3">%s verwijdert de geselecteerde navigatiegegevens.</string>
     <!-- Text for the cancel button for the data deletion dialog -->
@@ -1176,8 +1225,8 @@
     <!-- Text for the snackbar to show the user that the deletion of browsing data is in progress -->
     <string name="deleting_browsing_data_in_progress">Navigatiegegevens verwijderen…</string>
 
-    <!-- Dialog message to the user asking to delete all history items inside the opened group. -->
-    <string name="delete_history_group_prompt_message">Hiermee worden alle items verwijderd.</string>
+    <!-- Dialog message to the user asking to delete all history items inside the opened group. Parameter will be replaced by a history group name. -->
+    <string name="delete_all_history_group_prompt_message">Alle websites in ‘%s’ verwijderen</string>
     <!-- Text for the cancel button for the history group deletion dialog -->
     <string name="delete_history_group_prompt_cancel">Annuleren</string>
     <!-- Text for the allow button for the history group dialog -->
@@ -1307,6 +1356,8 @@
     <string name="preference_enhanced_tracking_protection_custom_cookies_3">Alle cookies van derden (kan ervoor zorgen dat websites niet goed werken)</string>
     <!-- Option for enhanced tracking protection for the custom protection settings for cookies-->
     <string name="preference_enhanced_tracking_protection_custom_cookies_4">Alle cookies (zal ervoor zorgen dat websites niet goed werken)</string>
+    <!-- Option for enhanced tracking protection for the custom protection settings for cookies-->
+    <string name="preference_enhanced_tracking_protection_custom_cookies_5">Cross-sitecookies isoleren</string>
     <!-- Preference for enhanced tracking protection for the custom protection settings for tracking content -->
     <string name="preference_enhanced_tracking_protection_custom_tracking_content">Volginhoud</string>
     <!-- Option for enhanced tracking protection for the custom protection settings for tracking content-->
@@ -1329,8 +1380,12 @@
     <string name="etp_social_media_trackers_description">Beperkt de mogelijkheid van sociale netwerken om uw surfactiviteit op internet te volgen.</string>
     <!-- Category of trackers (cross-site tracking cookies) that can be blocked by Enhanced Tracking Protection -->
     <string name="etp_cookies_title">Cross-site-trackingcookies</string>
+    <!-- Category of trackers (cross-site tracking cookies) that can be blocked by Enhanced Tracking Protection -->
+    <string name="etp_cookies_title_2">Cross-sitecookies</string>
     <!-- Description of cross-site tracking cookies that can be blocked by Enhanced Tracking Protection -->
     <string name="etp_cookies_description">Blokkeert cookies die advertentienetwerken en analysebedrijven gebruiken om uw surfgegevens op veel websites te verzamelen.</string>
+    <!-- Description of cross-site tracking cookies that can be blocked by Enhanced Tracking Protection -->
+    <string name="etp_cookies_description_2">Totale cookiebescherming isoleert cookies tot de website die u bezoekt, zodat trackers zoals advertentienetwerken ze niet kunnen gebruiken om u tussen websites te volgen.</string>
     <!-- Category of trackers (cryptominers) that can be blocked by Enhanced Tracking Protection -->
     <string name="etp_cryptominers_title">Cryptominers</string>
     <!-- Description of cryptominers that can be blocked by Enhanced Tracking Protection -->
@@ -1591,8 +1646,6 @@
     <string name="addresses_edit_address">Adres bewerken</string>
     <!-- Title of the "Manage addresses" screen -->
     <string name="addresses_manage_addresses">Adressen beheren</string>
-    <!-- The header for the full name of an address -->
-    <string moz:removedIn="102" name="addresses_full_name" tools:ignore="UnusedResources">Volledige naam</string>
     <!-- The header for the first name of an address -->
     <string name="addresses_first_name">Voornaam</string>
     <!-- The header for the middle name of an address -->
@@ -1700,10 +1753,6 @@
     <string name="no_site_exceptions">Geen website-uitzonderingen</string>
     <!-- Bookmark deletion confirmation -->
     <string name="bookmark_deletion_confirmation">Weet u zeker dat u deze bladwijzer wilt verwijderen?</string>
-    <!-- Browser menu button that adds a top site to the home fragment -->
-    <string moz:RemovedIn="101" name="browser_menu_add_to_top_sites" tools:ignore="UnusedResources">Aan topwebsites toevoegen</string>
-    <!-- Browser menu button that removes a top site from the home fragment -->
-    <string moz:RemovedIn="101" name="browser_menu_remove_from_top_sites" tools:ignore="UnusedResources">Verwijderen uit topwebsites</string>
     <!-- Browser menu button that adds a shortcut to the home fragment -->
     <string name="browser_menu_add_to_shortcuts">Aan snelkoppelingen toevoegen</string>
     <!-- Browser menu button that removes a shortcut from the home fragment -->
@@ -1780,12 +1829,8 @@
     <string name="synced_tabs_collapse_group">Groep gesynchroniseerde tabbladen samenvouwen</string>
 
     <!-- Top Sites -->
-    <!-- Title text displayed in the dialog when top sites limit is reached. -->
-    <string moz:RemovedIn="101" name="top_sites_max_limit_title" tools:ignore="UnusedResources">Limiet voor topwebsites bereikt</string>
     <!-- Title text displayed in the dialog when shortcuts limit is reached. -->
     <string name="shortcut_max_limit_title">Snelkoppelingslimiet bereikt</string>
-    <!-- Content description text displayed in the dialog when top sites limit is reached. -->
-    <string moz:RemovedIn="101" name="top_sites_max_limit_content_2" tools:ignore="UnusedResources">Verwijder een topwebsite om er een toe te voegen. Houd de website ingedrukt en selecteer Verwijderen.</string>
     <!-- Content description text displayed in the dialog when shortcut limit is reached. -->
     <string name="shortcut_max_limit_content">Verwijder een snelkoppeling om er een toe te voegen. Houd de website ingedrukt en selecteer Verwijderen.</string>
     <!-- Confirmation dialog button text when top sites limit is reached. -->
@@ -1795,8 +1840,6 @@
     <string name="top_sites_toggle_top_recent_sites_4">Snelkoppelingen</string>
 	<!-- Title text displayed in the rename top site dialog. -->
 	<string name="top_sites_rename_dialog_title">Naam</string>
-	<!-- Hint for renaming title of a top site -->
-	<string moz:RemovedIn="101" name="top_site_name_hint" tools:ignore="UnusedResources">Naam topwebsite</string>
     <!-- Hint for renaming title of a shortcut -->
     <string name="shortcut_name_hint">Naam snelkoppeling</string>
 	<!-- Button caption to confirm the renaming of the top site. -->
@@ -1869,4 +1912,5 @@
     <string name="experiments_snackbar">Schakel telemetrie in om gegevens te verzenden.</string>
     <!-- Snackbar button text to navigate to telemetry settings.-->
     <string name="experiments_snackbar_button">Naar Instellingen</string>
+    <string name="firefox_suggest_header">Firefox Suggesties</string>
 </resources>

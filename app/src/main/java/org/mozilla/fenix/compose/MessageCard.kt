@@ -57,7 +57,7 @@ fun MessageCard(
                     Modifier.clickable(onClick = onClick)
                 } else {
                     Modifier
-                }
+                },
             ),
         shape = RoundedCornerShape(8.dp),
         backgroundColor = FirefoxTheme.colors.layer2,
@@ -65,7 +65,7 @@ fun MessageCard(
         Column(
             Modifier
                 .padding(all = 16.dp)
-                .fillMaxWidth()
+                .fillMaxWidth(),
         ) {
             val title = message.data.title
             if (!title.isNullOrBlank()) {
@@ -75,19 +75,19 @@ fun MessageCard(
                     SectionHeader(
                         text = title,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(1f),
                     )
 
                     IconButton(
                         modifier = Modifier.size(20.dp),
-                        onClick = onCloseButtonClick
+                        onClick = onCloseButtonClick,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.mozac_ic_close_20),
                             contentDescription = stringResource(
-                                R.string.content_description_close_button
+                                R.string.content_description_close_button,
                             ),
-                            tint = FirefoxTheme.colors.iconPrimary
+                            tint = FirefoxTheme.colors.iconPrimary,
                         )
                     }
                 }
@@ -95,7 +95,8 @@ fun MessageCard(
                 Text(
                     text = message.data.text,
                     modifier = Modifier.fillMaxWidth(),
-                    fontSize = 14.sp
+                    fontSize = 14.sp,
+                    color = FirefoxTheme.colors.textSecondary,
                 )
             } else {
                 Row(
@@ -104,30 +105,32 @@ fun MessageCard(
                     Text(
                         text = message.data.text,
                         modifier = Modifier.weight(1f),
-                        fontSize = 14.sp
+                        fontSize = 14.sp,
+                        color = FirefoxTheme.colors.textPrimary,
                     )
 
                     IconButton(
                         modifier = Modifier.size(20.dp),
-                        onClick = onCloseButtonClick
+                        onClick = onCloseButtonClick,
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.mozac_ic_close_20),
                             contentDescription = stringResource(
-                                R.string.content_description_close_button
+                                R.string.content_description_close_button,
                             ),
-                            tint = FirefoxTheme.colors.iconPrimary
+                            tint = FirefoxTheme.colors.iconPrimary,
                         )
                     }
                 }
             }
 
-            if (!message.data.buttonLabel.isNullOrBlank()) {
+            val buttonLabel = message.data.buttonLabel
+            if (!buttonLabel.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 PrimaryButton(
-                    text = stringResource(R.string.preferences_set_as_default_browser),
-                    onClick = onClick
+                    text = buttonLabel,
+                    onClick = onClick,
                 )
             }
         }
@@ -137,7 +140,7 @@ fun MessageCard(
 @Composable
 @Preview
 private fun MessageCardPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             MessageCard(
                 message = Message(
@@ -145,19 +148,20 @@ private fun MessageCardPreview() {
                     data = MessageData(
                         title = StringHolder(
                             R.string.bookmark_empty_title_error,
-                            "Title"
+                            "Title",
                         ),
                         text = StringHolder(
-                            R.string.default_browser_experiment_card_text, "description"
-                        )
+                            R.string.default_browser_experiment_card_text,
+                            "description",
+                        ),
                     ),
                     action = "action",
                     style = StyleData(),
                     triggers = listOf("trigger"),
-                    metadata = Message.Metadata("end-")
+                    metadata = Message.Metadata("end-"),
                 ),
                 onClick = {},
-                onCloseButtonClick = {}
+                onCloseButtonClick = {},
             )
         }
     }
@@ -166,23 +170,24 @@ private fun MessageCardPreview() {
 @Composable
 @Preview
 private fun MessageCardWithoutTitlePreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             MessageCard(
                 message = Message(
                     id = "end-",
                     data = MessageData(
                         text = StringHolder(
-                            R.string.default_browser_experiment_card_text, "description"
-                        )
+                            R.string.default_browser_experiment_card_text,
+                            "description",
+                        ),
                     ),
                     action = "action",
                     style = StyleData(),
                     triggers = listOf("trigger"),
-                    metadata = Message.Metadata("end-")
+                    metadata = Message.Metadata("end-"),
                 ),
                 onClick = {},
-                onCloseButtonClick = {}
+                onCloseButtonClick = {},
             )
         }
     }
@@ -191,7 +196,7 @@ private fun MessageCardWithoutTitlePreview() {
 @Composable
 @Preview
 private fun MessageCardWithButtonLabelPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             MessageCard(
                 message = Message(
@@ -200,19 +205,20 @@ private fun MessageCardWithButtonLabelPreview() {
                         buttonLabel = StringHolder(R.string.preferences_set_as_default_browser, ""),
                         title = StringHolder(
                             R.string.bookmark_empty_title_error,
-                            "Title"
+                            "Title",
                         ),
                         text = StringHolder(
-                            R.string.default_browser_experiment_card_text, "description"
-                        )
+                            R.string.default_browser_experiment_card_text,
+                            "description",
+                        ),
                     ),
                     action = "action",
                     style = StyleData(),
                     triggers = listOf("trigger"),
-                    metadata = Message.Metadata("end-")
+                    metadata = Message.Metadata("end-"),
                 ),
                 onClick = {},
-                onCloseButtonClick = {}
+                onCloseButtonClick = {},
             )
         }
     }

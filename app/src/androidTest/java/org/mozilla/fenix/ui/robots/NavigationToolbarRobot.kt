@@ -24,9 +24,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withParent
 import androidx.test.espresso.matcher.ViewMatchers.withResourceName
 import androidx.test.espresso.matcher.ViewMatchers.withText
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import org.hamcrest.CoreMatchers.allOf
@@ -36,6 +34,7 @@ import org.junit.Assert.assertTrue
 import org.mozilla.fenix.R
 import org.mozilla.fenix.helpers.SessionLoadedIdlingResource
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTime
+import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.packageName
 import org.mozilla.fenix.helpers.click
 import org.mozilla.fenix.helpers.ext.waitNotNull
@@ -60,7 +59,7 @@ class NavigationToolbarRobot {
     fun toggleReaderView() {
         mDevice.findObject(
             UiSelector()
-                .resourceId("$packageName:id/mozac_browser_toolbar_page_actions")
+                .resourceId("$packageName:id/mozac_browser_toolbar_page_actions"),
         )
             .waitForExists(waitingTime)
 
@@ -68,9 +67,7 @@ class NavigationToolbarRobot {
     }
 
     class Transition {
-
         private lateinit var sessionLoadedIdlingResource: SessionLoadedIdlingResource
-        val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 
         fun goBackToWebsite(interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
             openEditURLView()
@@ -79,8 +76,8 @@ class NavigationToolbarRobot {
                 mDevice.findObject(
                     UiSelector()
                         .resourceId("$packageName:id/mozac_browser_toolbar_edit_url_view")
-                        .textContains("")
-                ).waitForExists(waitingTime)
+                        .textContains(""),
+                ).waitForExists(waitingTime),
             )
 
             goBackButton()
@@ -91,7 +88,7 @@ class NavigationToolbarRobot {
 
         fun enterURLAndEnterToBrowser(
             url: Uri,
-            interact: BrowserRobot.() -> Unit
+            interact: BrowserRobot.() -> Unit,
         ): BrowserRobot.Transition {
             sessionLoadedIdlingResource = SessionLoadedIdlingResource()
 
@@ -104,8 +101,8 @@ class NavigationToolbarRobot {
                 onView(
                     anyOf(
                         withResourceName("browserLayout"),
-                        withResourceName("download_button")
-                    )
+                        withResourceName("download_button"),
+                    ),
                 ).check(matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE)))
             }
 
@@ -144,7 +141,7 @@ class NavigationToolbarRobot {
             tabTrayButton().click()
             mDevice.waitNotNull(
                 Until.findObject(By.res("$packageName:id/tab_layout")),
-                waitingTime
+                waitingTime,
             )
 
             TabDrawerRobot().interact()
@@ -154,13 +151,13 @@ class NavigationToolbarRobot {
         fun visitLinkFromClipboard(interact: BrowserRobot.() -> Unit): BrowserRobot.Transition {
             mDevice.waitNotNull(
                 Until.findObject(By.res("org.mozilla.fenix.debug:id/mozac_browser_toolbar_clear_view")),
-                waitingTime
+                waitingTime,
             )
             clearAddressBar().click()
 
             mDevice.waitNotNull(
                 Until.findObject(By.res("org.mozilla.fenix.debug:id/clipboard_title")),
-                waitingTime
+                waitingTime,
             )
 
             // On Android 12 or above we don't SHOW the URL unless the user requests to do so.
@@ -168,7 +165,7 @@ class NavigationToolbarRobot {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
                 mDevice.waitNotNull(
                     Until.findObject(By.res("org.mozilla.fenix.debug:id/clipboard_url")),
-                    waitingTime
+                    waitingTime,
                 )
             }
 
@@ -192,10 +189,10 @@ class NavigationToolbarRobot {
                 .perform(
                     RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                         hasDescendant(
-                            withText("Close tab")
+                            withText("Close tab"),
                         ),
-                        ViewActions.click()
-                    )
+                        ViewActions.click(),
+                    ),
                 )
 
             NavigationToolbarRobot().interact()
@@ -209,10 +206,10 @@ class NavigationToolbarRobot {
                 .perform(
                     RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                         hasDescendant(
-                            withText("New tab")
+                            withText("New tab"),
                         ),
-                        ViewActions.click()
-                    )
+                        ViewActions.click(),
+                    ),
                 )
 
             HomeScreenRobot().interact()
@@ -226,10 +223,10 @@ class NavigationToolbarRobot {
                 .perform(
                     RecyclerViewActions.actionOnItem<RecyclerView.ViewHolder>(
                         hasDescendant(
-                            withText("New private tab")
+                            withText("New private tab"),
                         ),
-                        ViewActions.click()
-                    )
+                        ViewActions.click(),
+                    ),
                 )
 
             HomeScreenRobot().interact()
@@ -240,7 +237,7 @@ class NavigationToolbarRobot {
             urlBar().click()
 
             mDevice.findObject(
-                UiSelector().resourceId("$packageName:id/mozac_browser_toolbar_edit_url_view")
+                UiSelector().resourceId("$packageName:id/mozac_browser_toolbar_edit_url_view"),
             ).waitForExists(waitingTime)
 
             SearchRobot().interact()
@@ -257,12 +254,12 @@ fun navigationToolbar(interact: NavigationToolbarRobot.() -> Unit): NavigationTo
 fun openEditURLView() {
     mDevice.waitNotNull(
         Until.findObject(By.res("$packageName:id/toolbar")),
-        waitingTime
+        waitingTime,
     )
     urlBar().click()
     mDevice.waitNotNull(
         Until.findObject(By.res("$packageName:id/mozac_browser_toolbar_edit_url_view")),
-        waitingTime
+        waitingTime,
     )
 }
 
@@ -295,36 +292,42 @@ private fun readerViewToggle() =
 private fun assertReaderViewDetected(visible: Boolean) {
     mDevice.findObject(
         UiSelector()
-            .description("Reader view")
+            .description("Reader view"),
     )
         .waitForExists(waitingTime)
 
     onView(
         allOf(
             withParent(withId(R.id.mozac_browser_toolbar_page_actions)),
-            withContentDescription("Reader view")
-        )
+            withContentDescription("Reader view"),
+        ),
     ).check(
-        if (visible) matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE))
-        else ViewAssertions.doesNotExist()
+        if (visible) {
+            matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE))
+        } else {
+            ViewAssertions.doesNotExist()
+        },
     )
 }
 
 private fun assertCloseReaderViewDetected(visible: Boolean) {
     mDevice.findObject(
         UiSelector()
-            .description("Close reader view")
+            .description("Close reader view"),
     )
         .waitForExists(waitingTime)
 
     onView(
         allOf(
             withParent(withId(R.id.mozac_browser_toolbar_page_actions)),
-            withContentDescription("Close reader view")
-        )
+            withContentDescription("Close reader view"),
+        ),
     ).check(
-        if (visible) matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE))
-        else ViewAssertions.doesNotExist()
+        if (visible) {
+            matches(withEffectiveVisibility(ViewMatchers.Visibility.VISIBLE))
+        } else {
+            ViewAssertions.doesNotExist()
+        },
     )
 }
 

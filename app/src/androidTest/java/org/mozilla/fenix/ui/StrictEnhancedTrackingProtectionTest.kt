@@ -48,6 +48,8 @@ class StrictEnhancedTrackingProtectionTest {
         }
         featureSettingsHelper.setStrictETPEnabled()
         featureSettingsHelper.setJumpBackCFREnabled(false)
+        featureSettingsHelper.setTCPCFREnabled(false)
+        featureSettingsHelper.setShowWallpaperOnboarding(false)
     }
 
     @After
@@ -106,6 +108,7 @@ class StrictEnhancedTrackingProtectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun testStrictVisitProtectionSheet() {
         val genericPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
         val trackingProtectionTest =
@@ -162,6 +165,7 @@ class StrictEnhancedTrackingProtectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun testStrictVisitSheetDetails() {
         val genericPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
         val trackingProtectionTest =

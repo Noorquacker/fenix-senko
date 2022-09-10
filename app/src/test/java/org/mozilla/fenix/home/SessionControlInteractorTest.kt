@@ -46,7 +46,7 @@ class SessionControlInteractorTest {
             recentSyncedTabController,
             recentBookmarksController,
             recentVisitsController,
-            pocketStoriesController
+            pocketStoriesController,
         )
     }
 
@@ -163,13 +163,6 @@ class SessionControlInteractorTest {
     }
 
     @Test
-    fun onRecentSearchGroupClicked() {
-        val tabId = "tabId"
-        interactor.onRecentSearchGroupClicked(tabId)
-        verify { recentTabController.handleRecentSearchGroupClicked(tabId) }
-    }
-
-    @Test
     fun onRecentTabShowAllClicked() {
         interactor.onRecentTabShowAllClicked()
         verify { recentTabController.handleRecentTabShowAllClicked() }
@@ -205,12 +198,6 @@ class SessionControlInteractorTest {
     }
 
     @Test
-    fun `WHEN calling showOnboardingDialog THEN handleShowOnboardingDialog`() {
-        interactor.showOnboardingDialog()
-        verify { controller.handleShowOnboardingDialog() }
-    }
-
-    @Test
     fun `WHEN Show All recently saved bookmarks button is clicked THEN the click is handled`() {
         interactor.onShowAllBookmarksClicked()
         verify { recentBookmarksController.handleShowAllBookmarksClicked() }
@@ -240,10 +227,11 @@ class SessionControlInteractorTest {
     @Test
     fun `GIVEN a PocketStoriesInteractor WHEN a story is shown THEN handle it in a PocketStoriesController`() {
         val shownStory: PocketStory = mockk()
+        val storyGridLocation = 1 to 2
 
-        interactor.onStoryShown(shownStory)
+        interactor.onStoryShown(shownStory, storyGridLocation)
 
-        verify { pocketStoriesController.handleStoryShown(shownStory) }
+        verify { pocketStoriesController.handleStoryShown(shownStory, storyGridLocation) }
     }
 
     @Test

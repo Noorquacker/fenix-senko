@@ -44,7 +44,7 @@ class DownloadFileTypesTest(fileName: String) {
             "web_icon.png",
             "videoSample.webm",
             "CSVfile.csv",
-            "XMLfile.xml"
+            "XMLfile.xml",
         )
     }
 
@@ -52,6 +52,8 @@ class DownloadFileTypesTest(fileName: String) {
     fun setUp() {
         // disabling the jump-back-in pop-up that interferes with the tests.
         featureSettingsHelper.setJumpBackCFREnabled(false)
+        // disable the TCP CFR that appears when loading webpages and interferes with the tests.
+        featureSettingsHelper.setTCPCFREnabled(false)
         // disabling the PWA CFR on 3rd visit
         featureSettingsHelper.disablePwaCFR(true)
     }

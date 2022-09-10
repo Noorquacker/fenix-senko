@@ -28,15 +28,23 @@ interface HistoryInteractor : SelectionInteractor<History> {
     fun onSearch()
 
     /**
-     * Called when delete all is tapped
+     * Called when the delete menu button is tapped.
      */
-    fun onDeleteAll()
+    fun onDeleteTimeRange()
 
     /**
      * Called when multiple history items are deleted
      * @param items the history items to delete
      */
     fun onDeleteSome(items: Set<History>)
+
+    /**
+     * Called when the user has confirmed deletion of a time range.
+     *
+     * @param timeFrame The selected timeframe. `null` means no specific time frame has been
+     * selected; should remove everything.
+     */
+    fun onDeleteTimeRangeConfirmed(timeFrame: RemoveTimeFrame?)
 
     /**
      * Called when the user requests a sync of the history
@@ -47,11 +55,6 @@ interface HistoryInteractor : SelectionInteractor<History> {
      * Called when the user clicks on recently closed tab button.
      */
     fun onRecentlyClosedClicked()
-
-    /**
-     * Called when the user clicks on synced history button.
-     */
-    fun onSyncedHistoryClicked()
 }
 
 /**
@@ -60,7 +63,7 @@ interface HistoryInteractor : SelectionInteractor<History> {
  */
 @SuppressWarnings("TooManyFunctions")
 class DefaultHistoryInteractor(
-    private val historyController: HistoryController
+    private val historyController: HistoryController,
 ) : HistoryInteractor {
     override fun open(item: History) {
         historyController.handleOpen(item)
@@ -86,12 +89,16 @@ class DefaultHistoryInteractor(
         historyController.handleSearch()
     }
 
-    override fun onDeleteAll() {
-        historyController.handleDeleteAll()
+    override fun onDeleteTimeRange() {
+        historyController.handleDeleteTimeRange()
     }
 
     override fun onDeleteSome(items: Set<History>) {
         historyController.handleDeleteSome(items)
+    }
+
+    override fun onDeleteTimeRangeConfirmed(timeFrame: RemoveTimeFrame?) {
+        historyController.handleDeleteTimeRangeConfirmed(timeFrame)
     }
 
     override fun onRequestSync() {
@@ -100,9 +107,5 @@ class DefaultHistoryInteractor(
 
     override fun onRecentlyClosedClicked() {
         historyController.handleEnterRecentlyClosed()
-    }
-
-    override fun onSyncedHistoryClicked() {
-        historyController.handleEnterSyncedHistory()
     }
 }

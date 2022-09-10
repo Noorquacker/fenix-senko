@@ -54,7 +54,7 @@ fun ExpandableListHeader(
             true -> Modifier.clickable { onClick() }
             false -> Modifier
         }.then(
-            Modifier.fillMaxWidth()
+            Modifier.fillMaxWidth(),
         ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -76,7 +76,7 @@ fun ExpandableListHeader(
 
                 Icon(
                     painter = painterResource(
-                        if (expanded) R.drawable.ic_chevron_up else R.drawable.ic_chevron_down
+                        if (expanded) R.drawable.ic_chevron_up else R.drawable.ic_chevron_down,
                     ),
                     contentDescription = if (expanded) {
                         collapseActionContentDescription
@@ -96,7 +96,7 @@ fun ExpandableListHeader(
 @Composable
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun TextOnlyHeaderPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             ExpandableListHeader(headerText = "Section title")
         }
@@ -106,7 +106,7 @@ private fun TextOnlyHeaderPreview() {
 @Composable
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 private fun CollapsibleHeaderPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             ExpandableListHeader(
                 headerText = "Collapsible section title",
@@ -122,7 +122,7 @@ private fun CollapsibleHeaderPreview() {
 @Composable
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_NO)
 private fun HeaderWithClickableIconPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             ExpandableListHeader(headerText = "Section title") {
                 Box(
@@ -145,7 +145,7 @@ private fun HeaderWithClickableIconPreview() {
 @Composable
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_NO)
 private fun CollapsibleHeaderWithClickableIconPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer1)) {
             ExpandableListHeader(
                 headerText = "Section title",

@@ -38,7 +38,7 @@ import org.mozilla.fenix.theme.Theme
 fun SelectableChip(
     text: String,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -49,9 +49,9 @@ fun SelectableChip(
                     FirefoxTheme.colors.actionPrimary
                 } else {
                     FirefoxTheme.colors.actionTertiary
-                }
+                },
             )
-            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
     ) {
         Text(
             text = text.capitalize(Locale.current),
@@ -60,7 +60,7 @@ fun SelectableChip(
                 FirefoxTheme.colors.textActionPrimary
             } else {
                 FirefoxTheme.colors.textActionTertiary
-            }
+            },
         )
     }
 }
@@ -68,12 +68,12 @@ fun SelectableChip(
 @Composable
 @Preview(uiMode = UI_MODE_NIGHT_YES)
 private fun SelectableChipDarkThemePreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(FirefoxTheme.colors.layer1),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             SelectableChip(text = "Chirp", isSelected = false) { }
             SelectableChip(text = "Chirp", isSelected = true) { }
@@ -84,12 +84,12 @@ private fun SelectableChipDarkThemePreview() {
 @Composable
 @Preview(uiMode = UI_MODE_NIGHT_NO)
 private fun SelectableChipLightThemePreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(FirefoxTheme.colors.layer1),
-            horizontalArrangement = Arrangement.SpaceEvenly
+            horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
             SelectableChip(text = "Chirp", isSelected = false) { }
             SelectableChip(text = "Chirp", isSelected = true) { }

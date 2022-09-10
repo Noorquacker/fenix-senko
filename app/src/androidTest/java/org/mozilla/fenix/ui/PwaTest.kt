@@ -13,9 +13,11 @@ import org.mozilla.fenix.helpers.HomeActivityIntentTestRule
 import org.mozilla.fenix.helpers.TestHelper.assertNativeAppOpens
 import org.mozilla.fenix.ui.robots.customTabScreen
 import org.mozilla.fenix.ui.robots.navigationToolbar
+import org.mozilla.fenix.ui.robots.pwaScreen
 
 class PwaTest {
     private val featureSettingsHelper = FeatureSettingsHelper()
+
     /* Updated externalLinks.html to v2.0,
        changed the hypertext reference to mozilla-mobile.github.io/testapp/downloads for "External link"
      */
@@ -30,6 +32,7 @@ class PwaTest {
     @Before
     fun setUp() {
         featureSettingsHelper.disablePwaCFR(true)
+        featureSettingsHelper.setTCPCFREnabled(false)
     }
 
     @After
@@ -44,6 +47,8 @@ class PwaTest {
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(externalLinksPWAPage.toUri()) {
+            waitForPageToLoad()
+            verifyNotificationDotOnMainMenu()
         }.openThreeDotMenu {
         }.clickInstall {
             clickAddAutomaticallyButton()
@@ -59,10 +64,10 @@ class PwaTest {
     @SmokeTest
     @Test
     fun emailLinkPWATest() {
-
         navigationToolbar {
         }.enterURLAndEnterToBrowser(externalLinksPWAPage.toUri()) {
             waitForPageToLoad()
+            verifyNotificationDotOnMainMenu()
         }.openThreeDotMenu {
         }.clickInstall {
             clickAddAutomaticallyButton()
@@ -75,16 +80,35 @@ class PwaTest {
     @SmokeTest
     @Test
     fun telephoneLinkPWATest() {
-
         navigationToolbar {
         }.enterURLAndEnterToBrowser(externalLinksPWAPage.toUri()) {
             waitForPageToLoad()
+            verifyNotificationDotOnMainMenu()
         }.openThreeDotMenu {
         }.clickInstall {
             clickAddAutomaticallyButton()
         }.openHomeScreenShortcut(shortcutTitle) {
             clickLinkMatchingText("Telephone link")
             assertNativeAppOpens(PHONE_APP, phoneLink)
+        }
+    }
+
+    @SmokeTest
+    @Test
+    fun appLikeExperiencePWATest() {
+        navigationToolbar {
+        }.enterURLAndEnterToBrowser(externalLinksPWAPage.toUri()) {
+            waitForPageToLoad()
+            verifyNotificationDotOnMainMenu()
+        }.openThreeDotMenu {
+        }.clickInstall {
+            clickAddAutomaticallyButton()
+        }.openHomeScreenShortcut(shortcutTitle) {
+        }
+
+        pwaScreen {
+            verifyCustomTabToolbarIsNotDisplayed()
+            verifyPwaActivityInCurrentTask()
         }
     }
 }

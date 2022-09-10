@@ -3,7 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 // If you ever need to force a toolchain rebuild (taskcluster) then edit the following comment.
-// FORCE REBUILD 2021-11-24
+// FORCE REBUILD 2022-08-18
 
 object Versions {
     const val kotlin = "1.6.10"
@@ -20,7 +20,8 @@ object Versions {
     const val detekt = "1.19.0"
     const val jna = "5.8.0"
 
-    const val androidx_compose = "1.1.1"
+    const val androidx_compose = "1.2.1"
+    const val androidx_compose_compiler = "1.1.1"
     const val androidx_appcompat = "1.3.0"
     const val androidx_benchmark = "1.0.0"
     const val androidx_biometric = "1.1.0"
@@ -39,6 +40,8 @@ object Versions {
     const val androidx_work = "2.7.1"
     const val androidx_datastore = "1.0.0"
     const val google_material = "1.2.1"
+    const val accompanist_drawablepainter = "0.23.1"
+    const val accompanist_insets = "0.23.1"
 
     const val mozilla_android_components = AndroidComponents.VERSION
 
@@ -50,7 +53,7 @@ object Versions {
 
     const val mockwebserver = "4.9.0"
     const val uiautomator = "2.2.0"
-    const val robolectric = "4.6.1"
+    const val robolectric = "4.8.1"
 
     const val google_ads_id_version = "16.0.0"
 
@@ -209,6 +212,10 @@ object Deps {
     const val androidx_work_testing = "androidx.work:work-testing:${Versions.androidx_work}"
     const val androidx_datastore = "androidx.datastore:datastore:${Versions.androidx_datastore}"
     const val google_material = "com.google.android.material:material:${Versions.google_material}"
+    const val google_accompanist_drawablepainter =
+        "com.google.accompanist:accompanist-drawablepainter:${Versions.accompanist_drawablepainter}"
+    const val google_accompanist_insets =
+        "com.google.accompanist:accompanist-insets:${Versions.accompanist_drawablepainter}"
 
     const val protobuf_javalite = "com.google.protobuf:protobuf-javalite:${Versions.protobuf}"
     const val protobuf_compiler = "com.google.protobuf:protoc:${Versions.protobuf}"

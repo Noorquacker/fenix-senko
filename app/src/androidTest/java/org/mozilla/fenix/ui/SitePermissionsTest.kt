@@ -6,18 +6,23 @@ package org.mozilla.fenix.ui
 
 import android.Manifest
 import android.content.Context
+import android.hardware.camera2.CameraManager
+import android.media.AudioManager
+import android.os.Build
 import androidx.core.net.toUri
+import androidx.test.filters.SdkSuppress
 import androidx.test.rule.GrantPermissionRule
-import kotlinx.coroutines.runBlocking
 import org.junit.After
+import org.junit.Assume.assumeTrue
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
-import org.mozilla.fenix.components.PermissionStorage
 import org.mozilla.fenix.customannotations.SmokeTest
 import org.mozilla.fenix.helpers.FeatureSettingsHelper
 import org.mozilla.fenix.helpers.HomeActivityTestRule
+import org.mozilla.fenix.helpers.MockLocationUpdatesRule
+import org.mozilla.fenix.helpers.RetryTestRule
+import org.mozilla.fenix.helpers.TestHelper.appContext
 import org.mozilla.fenix.ui.robots.browserScreen
 import org.mozilla.fenix.ui.robots.navigationToolbar
 
@@ -30,6 +35,8 @@ class SitePermissionsTest {
     private val testPage = "https://mozilla-mobile.github.io/testapp/permissions"
     private val testPageSubstring = "https://mozilla-mobile.github.io:443"
     private val featureSettingsHelper = FeatureSettingsHelper()
+    private val cameraManager = appContext.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    private val micManager = appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
     @get:Rule
     val activityTestRule = HomeActivityTestRule()
@@ -37,31 +44,36 @@ class SitePermissionsTest {
     @get:Rule
     val grantPermissionRule: GrantPermissionRule = GrantPermissionRule.grant(
         Manifest.permission.RECORD_AUDIO,
-        Manifest.permission.CAMERA
+        Manifest.permission.CAMERA,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
     )
+
+    @get: Rule
+    val mockLocationUpdatesRule = MockLocationUpdatesRule()
+
+    @get: Rule
+    val retryTestRule = RetryTestRule(3)
 
     @Before
     fun setUp() {
         // disabling the new homepage pop-up that interferes with the tests.
         featureSettingsHelper.setJumpBackCFREnabled(false)
+        featureSettingsHelper.setTCPCFREnabled(false)
         featureSettingsHelper.deleteSitePermissions(true)
+        featureSettingsHelper.disablePwaCFR(true)
     }
 
     @After
     fun tearDown() {
-        // Clearing all permission data after each test to avoid overlapping data
-        val applicationContext: Context = activityTestRule.activity.applicationContext
-        val permissionStorage = PermissionStorage(applicationContext)
-
-        runBlocking {
-            permissionStorage.deleteAllSitePermissions()
-        }
+        featureSettingsHelper.resetAllFeatureFlags()
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @SmokeTest
     @Test
-    @Ignore("Firebase - No camera and microphone on AVD")
     fun audioVideoPermissionChoiceOnEachRequestTest() {
+        assumeTrue(cameraManager.cameraIdList.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -75,10 +87,13 @@ class SitePermissionsTest {
         }
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @SmokeTest
     @Test
-    @Ignore("Firebase - No camera and microphone on AVD, see also https://github.com/mozilla-mobile/fenix/issues/23298")
     fun rememberBlockAudioVideoPermissionChoiceTest() {
+        assumeTrue(cameraManager.cameraIdList.isNotEmpty())
+        assumeTrue(micManager.microphones.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -96,10 +111,13 @@ class SitePermissionsTest {
         }
     }
 
-    @Ignore("Firebase - No camera and microphone on AVD, see also https://github.com/mozilla-mobile/fenix/issues/23298")
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @SmokeTest
     @Test
     fun rememberAllowAudioVideoPermissionChoiceTest() {
+        assumeTrue(cameraManager.cameraIdList.isNotEmpty())
+        assumeTrue(micManager.microphones.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -117,9 +135,11 @@ class SitePermissionsTest {
         }
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @Test
-    @Ignore("Firebase - No camera and microphone on AVD")
     fun microphonePermissionChoiceOnEachRequestTest() {
+        assumeTrue(micManager.microphones.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -133,9 +153,11 @@ class SitePermissionsTest {
         }
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @Test
-    @Ignore("Firebase - No camera and microphone on AVD")
     fun rememberBlockMicrophonePermissionChoiceTest() {
+        assumeTrue(micManager.microphones.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -153,9 +175,11 @@ class SitePermissionsTest {
         }
     }
 
-    @Ignore("Flaky, needs investigation: https://github.com/mozilla-mobile/fenix/issues/23298")
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @Test
     fun rememberAllowMicrophonePermissionChoiceTest() {
+        assumeTrue(micManager.microphones.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -173,9 +197,11 @@ class SitePermissionsTest {
         }
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @Test
-    @Ignore("Firebase - No camera and microphone on AVD")
     fun cameraPermissionChoiceOnEachRequestTest() {
+        assumeTrue(cameraManager.cameraIdList.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -189,9 +215,11 @@ class SitePermissionsTest {
         }
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @Test
-    @Ignore("Firebase - No camera and microphone on AVD")
     fun rememberBlockCameraPermissionChoiceTest() {
+        assumeTrue(cameraManager.cameraIdList.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -209,9 +237,11 @@ class SitePermissionsTest {
         }
     }
 
+    @SdkSuppress(maxSdkVersion = Build.VERSION_CODES.P, codeName = "P")
     @Test
-    @Ignore("Firebase - No camera and microphone on AVD")
     fun rememberAllowCameraPermissionChoiceTest() {
+        assumeTrue(cameraManager.cameraIdList.isNotEmpty())
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
             waitForPageToLoad()
@@ -256,20 +286,20 @@ class SitePermissionsTest {
         }
     }
 
-    @Ignore("Needs mocking location for Firebase - to do: https://github.com/mozilla-mobile/mobile-test-eng/issues/585")
     @Test
     fun allowLocationPermissionsTest() {
+        mockLocationUpdatesRule.setMockLocation()
+
         navigationToolbar {
         }.enterURLAndEnterToBrowser(testPage.toUri()) {
         }.clickGetLocationButton {
             verifyLocationPermissionPrompt(testPageSubstring)
         }.clickPagePermissionButton(true) {
-            verifyPageContent("longitude")
-            verifyPageContent("latitude")
+            verifyPageContent("${mockLocationUpdatesRule.latitude}")
+            verifyPageContent("${mockLocationUpdatesRule.longitude}")
         }
     }
 
-    @Ignore("Needs mocking location for Firebase - to do: https://github.com/mozilla-mobile/mobile-test-eng/issues/585")
     @Test
     fun blockLocationPermissionsTest() {
         navigationToolbar {

@@ -46,11 +46,11 @@ class SettingsFragmentTest {
         val client = mockk<Client>()
         every { client.fetch(any()) } throws IOException("test")
 
+        every { testContext.components.core.engine.profiler } returns mockk(relaxed = true)
         every { testContext.components.core.client } returns client
         every { testContext.components.settings } returns mockk(relaxed = true)
         every { testContext.components.analytics } returns mockk(relaxed = true)
         every { testContext.components.backgroundServices } returns mockk(relaxed = true)
-
         mockkObject(Config)
         every { Config.channel } returns ReleaseChannel.Nightly
 
@@ -72,7 +72,7 @@ class SettingsFragmentTest {
         advanceUntilIdle()
 
         val preferenceAmoCollectionOverride = settingsFragment.findPreference<Preference>(
-            settingsFragment.getPreferenceKey(R.string.pref_key_override_amo_collection)
+            settingsFragment.getPreferenceKey(R.string.pref_key_override_amo_collection),
         )
 
         settingsFragment.setupAmoCollectionOverridePreference(mockk(relaxed = true))
@@ -97,7 +97,7 @@ class SettingsFragmentTest {
         advanceUntilIdle()
 
         val preferenceAmoCollectionOverride = settingsFragment.findPreference<Preference>(
-            settingsFragment.getPreferenceKey(R.string.pref_key_override_amo_collection)
+            settingsFragment.getPreferenceKey(R.string.pref_key_override_amo_collection),
         )
 
         settingsFragment.setupAmoCollectionOverridePreference(mockk(relaxed = true))
@@ -119,7 +119,7 @@ class SettingsFragmentTest {
     @Test
     fun `GIVEN the HttpsOnly is enabled THEN set the appropriate preference summary`() {
         val httpsOnlyPreference = settingsFragment.findPreference<Preference>(
-            settingsFragment.getPreferenceKey(R.string.pref_key_https_only_settings)
+            settingsFragment.getPreferenceKey(R.string.pref_key_https_only_settings),
         )!!
         every { testContext.settings().shouldUseHttpsOnly } returns true
         assertTrue(httpsOnlyPreference.summary.isNullOrEmpty())
@@ -133,7 +133,7 @@ class SettingsFragmentTest {
     @Test
     fun `GIVEN the HttpsOnly is disabled THEN set the appropriate preference summary`() {
         val httpsOnlyPreference = settingsFragment.findPreference<Preference>(
-            settingsFragment.getPreferenceKey(R.string.pref_key_https_only_settings)
+            settingsFragment.getPreferenceKey(R.string.pref_key_https_only_settings),
         )!!
         every { testContext.settings().shouldUseHttpsOnly } returns false
         assertTrue(httpsOnlyPreference.summary.isNullOrEmpty())

@@ -80,13 +80,16 @@ class InactiveTabViewHolder(
         }
     }
 
+    override val allowPrivateTheme: Boolean
+        get() = false
+
     private fun showConfirmationSnackbar() {
         val context = composeView.context
         val text = context.getString(R.string.inactive_tabs_auto_close_message_snackbar)
         val snackbar = FenixSnackbar.make(
             view = composeView,
             duration = FenixSnackbar.LENGTH_SHORT,
-            isDisplayedWithBrowserToolbar = true
+            isDisplayedWithBrowserToolbar = true,
         ).setText(text)
         snackbar.view.elevation = TabsTrayFragment.ELEVATION
         snackbar.show()

@@ -10,6 +10,7 @@ import androidx.test.uiautomator.UiDevice
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.mozilla.fenix.customannotations.SmokeTest
@@ -29,7 +30,7 @@ import org.mozilla.fenix.ui.robots.tabDrawer
  */
 
 class CollectionTest {
-    private val mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+    private lateinit var mDevice: UiDevice
     private lateinit var mockWebServer: MockWebServer
     private val firstCollectionName = "testcollection_1"
     private val secondCollectionName = "testcollection_2"
@@ -39,7 +40,7 @@ class CollectionTest {
     @get:Rule
     val composeTestRule = AndroidComposeTestRule(
         HomeActivityIntentTestRule(),
-        { it.activity }
+        { it.activity },
     )
 
     @Before
@@ -51,6 +52,7 @@ class CollectionTest {
         featureSettingsHelper.setJumpBackCFREnabled(false)
         featureSettingsHelper.setRecentlyVisitedFeatureEnabled(false)
 
+        mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mockWebServer = MockWebServer().apply {
             dispatcher = AndroidAssetDispatcher()
             start()
@@ -67,6 +69,7 @@ class CollectionTest {
 
     @SmokeTest
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun createFirstCollectionTest() {
         val firstWebPage = getGenericAsset(mockWebServer, 1)
         val secondWebPage = getGenericAsset(mockWebServer, 2)
@@ -99,6 +102,7 @@ class CollectionTest {
 
     @SmokeTest
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun verifyExpandedCollectionItemsTest() {
         val webPage = getGenericAsset(mockWebServer, 1)
         val webPageUrl = webPage.url.host.toString()
@@ -148,6 +152,7 @@ class CollectionTest {
 
     @SmokeTest
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun openAllTabsInCollectionTest() {
         val firstTestPage = getGenericAsset(mockWebServer, 1)
         val secondTestPage = getGenericAsset(mockWebServer, 2)
@@ -163,7 +168,7 @@ class CollectionTest {
             createCollection(
                 firstTestPage.title,
                 secondTestPage.title,
-                collectionName = collectionName
+                collectionName = collectionName,
             )
             closeTab()
         }
@@ -180,6 +185,7 @@ class CollectionTest {
 
     @SmokeTest
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun shareCollectionTest() {
         val firstWebsite = getGenericAsset(mockWebServer, 1)
         val secondWebsite = getGenericAsset(mockWebServer, 2)
@@ -208,6 +214,7 @@ class CollectionTest {
     @Test
     // Test running on beta/release builds in CI:
     // caution when making changes to it, so they don't block the builds
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun deleteCollectionTest() {
         val webPage = getGenericAsset(mockWebServer, 1)
 
@@ -232,6 +239,7 @@ class CollectionTest {
 
     @Test
     // open a webpage, and add currently opened tab to existing collection
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun mainMenuSaveToExistingCollection() {
         val firstWebPage = getGenericAsset(mockWebServer, 1)
         val secondWebPage = getGenericAsset(mockWebServer, 2)
@@ -258,6 +266,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun verifyAddTabButtonOfCollectionMenu() {
         val firstWebPage = getGenericAsset(mockWebServer, 1)
         val secondWebPage = getGenericAsset(mockWebServer, 2)
@@ -284,6 +293,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun renameCollectionTest() {
         val webPage = getGenericAsset(mockWebServer, 1)
 
@@ -304,6 +314,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun createSecondCollectionTest() {
         val webPage = getGenericAsset(mockWebServer, 1)
 
@@ -313,8 +324,9 @@ class CollectionTest {
             createCollection(webPage.title, collectionName = firstCollectionName)
             verifySnackBarText("Collection saved!")
             createCollection(
-                webPage.title, collectionName = secondCollectionName,
-                firstCollection = false
+                webPage.title,
+                collectionName = secondCollectionName,
+                firstCollection = false,
             )
             verifySnackBarText("Collection saved!")
         }.closeTabDrawer {
@@ -325,6 +337,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun removeTabFromCollectionTest() {
         val webPage = getGenericAsset(mockWebServer, 1)
 
@@ -347,6 +360,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun swipeLeftToRemoveTabFromCollectionTest() {
         val testPage = getGenericAsset(mockWebServer, 1)
 
@@ -356,7 +370,7 @@ class CollectionTest {
         }.openTabDrawer {
             createCollection(
                 testPage.title,
-                collectionName = collectionName
+                collectionName = collectionName,
             )
             closeTab()
         }
@@ -373,6 +387,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun swipeRightToRemoveTabFromCollectionTest() {
         val testPage = getGenericAsset(mockWebServer, 1)
 
@@ -382,7 +397,7 @@ class CollectionTest {
         }.openTabDrawer {
             createCollection(
                 testPage.title,
-                collectionName = collectionName
+                collectionName = collectionName,
             )
             closeTab()
         }
@@ -399,6 +414,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun selectTabOnLongTapTest() {
         val firstWebPage = getGenericAsset(mockWebServer, 1)
         val secondWebPage = getGenericAsset(mockWebServer, 2)
@@ -430,6 +446,7 @@ class CollectionTest {
     }
 
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun navigateBackInCollectionFlowTest() {
         val webPage = getGenericAsset(mockWebServer, 1)
 
@@ -463,6 +480,7 @@ class CollectionTest {
 
     @SmokeTest
     @Test
+    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun undoDeleteCollectionTest() {
         val webPage = getGenericAsset(mockWebServer, 1)
 

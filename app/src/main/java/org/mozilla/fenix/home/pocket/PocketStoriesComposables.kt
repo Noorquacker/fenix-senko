@@ -49,6 +49,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
@@ -66,6 +67,7 @@ import org.mozilla.fenix.compose.ListItemTabSurface
 import org.mozilla.fenix.compose.SelectableChip
 import org.mozilla.fenix.compose.StaggeredHorizontalGrid
 import org.mozilla.fenix.compose.TabSubtitleWithInterdot
+import org.mozilla.fenix.compose.inComposePreview
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.theme.Theme
@@ -105,7 +107,7 @@ fun PocketStory(
 ) {
     val imageUrl = story.imageUrl.replace(
         "{wh}",
-        with(LocalDensity.current) { "${116.dp.toPx().roundToInt()}x${84.dp.toPx().roundToInt()}" }
+        with(LocalDensity.current) { "${116.dp.toPx().roundToInt()}x${84.dp.toPx().roundToInt()}" },
     )
     val isValidPublisher = story.publisher.isNotBlank()
     val isValidTimeToRead = story.timeToRead >= 0
@@ -141,7 +143,7 @@ fun PocketStory(
                     maxLines = 1,
                 )
             }
-        }
+        },
     )
 }
 
@@ -154,17 +156,20 @@ fun PocketStory(
 @Composable
 fun PocketSponsoredStory(
     story: PocketSponsoredStory,
-    onStoryClick: (PocketSponsoredStory) -> Unit
+    onStoryClick: (PocketSponsoredStory) -> Unit,
 ) {
     val (imageWidth, imageHeight) = with(LocalDensity.current) {
         116.dp.toPx().roundToInt() to 84.dp.toPx().roundToInt()
     }
     val imageUrl = story.imageUrl.replace(
         "&resize=w[0-9]+-h[0-9]+".toRegex(),
-        "&resize=w$imageWidth-h$imageHeight"
+        "&resize=w$imageWidth-h$imageHeight",
     )
 
-    ListItemTabSurface(imageUrl, { onStoryClick(story) }) {
+    ListItemTabSurface(
+        imageUrl = imageUrl,
+        onClick = { onStoryClick(story) },
+    ) {
         Text(
             text = story.title,
             color = FirefoxTheme.colors.textPrimary,
@@ -175,23 +180,13 @@ fun PocketSponsoredStory(
 
         Spacer(Modifier.height(9.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                painter = painterResource(id = R.drawable.pocket_star_stroke),
-                contentDescription = null,
-                tint = FirefoxTheme.colors.iconSecondary,
-            )
-
-            Spacer(Modifier.width(8.dp))
-
-            Text(
-                text = stringResource(R.string.pocket_stories_sponsor_indication),
-                color = FirefoxTheme.colors.textSecondary,
-                fontSize = 12.sp,
-                overflow = TextOverflow.Ellipsis,
-                maxLines = 1,
-            )
-        }
+        Text(
+            text = stringResource(R.string.pocket_stories_sponsor_indication),
+            color = FirefoxTheme.colors.textSecondary,
+            fontSize = 12.sp,
+            overflow = TextOverflow.Ellipsis,
+            maxLines = 1,
+        )
 
         Spacer(Modifier.height(7.dp))
 
@@ -213,6 +208,7 @@ fun PocketSponsoredStory(
  * @param stories The list of [PocketStory]ies to be displayed. Expect a list with 8 items.
  * @param contentPadding Dimension for padding the content after it has been clipped.
  * This space will be used for shadows and also content rendering when the list is scrolled.
+ * @param onStoryShown Callback for when a certain story is visible to the user.
  * @param onStoryClicked Callback for when the user taps on a recommended story.
  * @param onDiscoverMoreClicked Callback for when the user taps an element which contains an
  */
@@ -220,9 +216,9 @@ fun PocketSponsoredStory(
 fun PocketStories(
     @PreviewParameter(PocketStoryProvider::class) stories: List<PocketStory>,
     contentPadding: Dp,
-    onStoryShown: (PocketStory) -> Unit,
+    onStoryShown: (PocketStory, Pair<Int, Int>) -> Unit,
     onStoryClicked: (PocketStory, Pair<Int, Int>) -> Unit,
-    onDiscoverMoreClicked: (String) -> Unit
+    onDiscoverMoreClicked: (String) -> Unit,
 ) {
     // Show stories in at most 3 rows but on any number of columns depending on the data received.
     val maxRowsNo = 3
@@ -235,7 +231,7 @@ fun PocketStories(
         contentPadding = PaddingValues(horizontal = contentPadding),
         state = listState,
         flingBehavior = flingBehavior,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         itemsIndexed(storiesToShow) { columnIndex, columnItems ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -255,8 +251,8 @@ fun PocketStories(
                     } else if (story is PocketSponsoredStory) {
                         Box(
                             modifier = Modifier.onShown(0.5f) {
-                                onStoryShown(story)
-                            }
+                                onStoryShown(story, rowIndex to columnIndex)
+                            },
                         ) {
                             PocketSponsoredStory(story) {
                                 onStoryClicked(story, rowIndex to columnIndex)
@@ -283,40 +279,44 @@ private fun Modifier.onShown(
     var lastVisibleCoordinates: LayoutCoordinates? = null
 
     return composed {
-        val context = LocalContext.current
-        var wasEventReported by remember { mutableStateOf(false) }
+        if (inComposePreview) {
+            Modifier
+        } else {
+            val context = LocalContext.current
+            var wasEventReported by remember { mutableStateOf(false) }
 
-        val toolbarHeight = context.resources.getDimensionPixelSize(R.dimen.browser_toolbar_height)
-        val isToolbarPlacedAtBottom = context.settings().shouldUseBottomToolbar
-        // Get a Rect of the entire screen minus system insets minus the toolbar
-        val screenBounds = Rect()
-            .apply { LocalView.current.getWindowVisibleDisplayFrame(this) }
-            .apply {
-                when (isToolbarPlacedAtBottom) {
-                    true -> bottom -= toolbarHeight
-                    false -> top += toolbarHeight
+            val toolbarHeight = context.resources.getDimensionPixelSize(R.dimen.browser_toolbar_height)
+            val isToolbarPlacedAtBottom = context.settings().shouldUseBottomToolbar
+            // Get a Rect of the entire screen minus system insets minus the toolbar
+            val screenBounds = Rect()
+                .apply { LocalView.current.getWindowVisibleDisplayFrame(this) }
+                .apply {
+                    when (isToolbarPlacedAtBottom) {
+                        true -> bottom -= toolbarHeight
+                        false -> top += toolbarHeight
+                    }
+                }
+
+            // In the event this composable starts as visible but then gets pushed offscreen
+            // before MINIMUM_TIME_TO_SETTLE_MS we will not report is as being visible.
+            // In the LaunchedEffect we add support for when the composable starts as visible and then
+            // it's position isn't changed after MINIMUM_TIME_TO_SETTLE_MS so it must be reported as visible.
+            LaunchedEffect(initialTime) {
+                delay(MINIMUM_TIME_TO_SETTLE_MS.toLong())
+                if (!wasEventReported && lastVisibleCoordinates?.isVisible(screenBounds, threshold) == true) {
+                    wasEventReported = true
+                    onVisible()
                 }
             }
 
-        // In the event this composable starts as visible but then gets pushed offscreen
-        // before MINIMUM_TIME_TO_SETTLE_MS we will not report is as being visible.
-        // In the LaunchedEffect we add support for when the composable starts as visible and then
-        // it's position isn't changed after MINIMUM_TIME_TO_SETTLE_MS so it must be reported as visible.
-        LaunchedEffect(initialTime) {
-            delay(MINIMUM_TIME_TO_SETTLE_MS.toLong())
-            if (!wasEventReported && lastVisibleCoordinates?.isVisible(screenBounds, threshold) == true) {
-                wasEventReported = true
-                onVisible()
-            }
-        }
-
-        onGloballyPositioned { coordinates ->
-            if (!wasEventReported && coordinates.isVisible(screenBounds, threshold)) {
-                if (System.currentTimeMillis() - initialTime > MINIMUM_TIME_TO_SETTLE_MS) {
-                    wasEventReported = true
-                    onVisible()
-                } else {
-                    lastVisibleCoordinates = coordinates
+            onGloballyPositioned { coordinates ->
+                if (!wasEventReported && coordinates.isVisible(screenBounds, threshold)) {
+                    if (System.currentTimeMillis() - initialTime > MINIMUM_TIME_TO_SETTLE_MS) {
+                        wasEventReported = true
+                        onVisible()
+                    } else {
+                        lastVisibleCoordinates = coordinates
+                    }
                 }
             }
         }
@@ -333,15 +333,20 @@ private fun LayoutCoordinates.isVisible(
 ): Boolean {
     if (!isAttached) return false
 
-    return boundsInWindow().toAndroidRect().getIntersectPercentage(visibleRect) >= threshold
+    return boundsInWindow().toAndroidRect().getIntersectPercentage(size, visibleRect) >= threshold
 }
 
 /**
  * Returns the ratio of how much this intersects with [other].
+ *
+ * @param realSize [IntSize] containing the true height and width of the composable.
+ * @param other Other [Rect] for whcih to check the intersection area.
+ *
+ * @return A `0..1` float range for how much this [Rect] intersects with other.
  */
 @FloatRange(from = 0.0, to = 1.0)
-private fun Rect.getIntersectPercentage(other: Rect): Float {
-    val composableArea = height() * width()
+private fun Rect.getIntersectPercentage(realSize: IntSize, other: Rect): Float {
+    val composableArea = realSize.height * realSize.width
     val heightOverlap = max(0, min(bottom, other.bottom) - max(top, other.top))
     val widthOverlap = max(0, min(right, other.right) - max(left, other.left))
     val intersectionArea = heightOverlap * widthOverlap
@@ -362,12 +367,12 @@ fun PocketStoriesCategories(
     categories: List<PocketRecommendedStoriesCategory>,
     selections: List<PocketRecommendedStoriesSelectedCategory>,
     onCategoryClick: (PocketRecommendedStoriesCategory) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier) {
         StaggeredHorizontalGrid(
             horizontalItemsSpacing = 16.dp,
-            verticalItemsSpacing = 16.dp
+            verticalItemsSpacing = 16.dp,
         ) {
             categories.filter { it.name != POCKET_STORIES_DEFAULT_CATEGORY_NAME }.forEach { category ->
                 SelectableChip(category.name, selections.map { it.name }.contains(category.name)) {
@@ -385,11 +390,13 @@ fun PocketStoriesCategories(
  * @param onLearnMoreClicked Callback invoked when the user clicks the "Learn more" link.
  * Contains the full URL for where the user should be navigated to.
  * @param modifier [Modifier] to be applied to the layout.
+ * @param textColor [Color] to be applied to the text.
  */
 @Composable
 fun PoweredByPocketHeader(
     onLearnMoreClicked: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    textColor: Color = FirefoxTheme.colors.textPrimary,
 ) {
     val link = stringResource(R.string.pocket_stories_feature_learn_more)
     val text = stringResource(R.string.pocket_stories_feature_caption, link)
@@ -404,13 +411,13 @@ fun PoweredByPocketHeader(
             Modifier
                 .fillMaxWidth()
                 .semantics(mergeDescendants = true) {},
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.pocket_vector),
                 contentDescription = null,
                 // Apply the red tint in code. Otherwise the image is black and white.
-                tint = Color(0xFFEF4056)
+                tint = Color(0xFFEF4056),
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -418,16 +425,16 @@ fun PoweredByPocketHeader(
             Column {
                 Text(
                     text = stringResource(R.string.pocket_stories_feature_title),
-                    color = FirefoxTheme.colors.textPrimary,
+                    color = textColor,
                     fontSize = 12.sp,
-                    lineHeight = 16.sp
+                    lineHeight = 16.sp,
                 )
 
                 ClickableSubstringLink(
                     text = text,
-                    textColor = FirefoxTheme.colors.textPrimary,
+                    textColor = textColor,
                     clickableStartIndex = linkStartIndex,
-                    clickableEndIndex = linkEndIndex
+                    clickableEndIndex = linkEndIndex,
                 ) {
                     onLearnMoreClicked("https://www.mozilla.org/en-US/firefox/pocket/?$POCKET_FEATURE_UTM_KEY_VALUE")
                 }
@@ -439,15 +446,15 @@ fun PoweredByPocketHeader(
 @Composable
 @Preview
 private fun PocketStoriesComposablesPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         Box(Modifier.background(FirefoxTheme.colors.layer2)) {
             Column {
                 PocketStories(
                     stories = getFakePocketStories(8),
                     contentPadding = 0.dp,
-                    onStoryShown = {},
+                    onStoryShown = { _, _ -> },
                     onStoryClicked = { _, _ -> },
-                    onDiscoverMoreClicked = {}
+                    onDiscoverMoreClicked = {},
                 )
                 Spacer(Modifier.height(10.dp))
 
@@ -456,12 +463,12 @@ private fun PocketStoriesComposablesPreview() {
                         .split(" ")
                         .map { PocketRecommendedStoriesCategory(it) },
                     selections = emptyList(),
-                    onCategoryClick = {}
+                    onCategoryClick = {},
                 )
                 Spacer(Modifier.height(10.dp))
 
                 PoweredByPocketHeader(
-                    onLearnMoreClicked = {}
+                    onLearnMoreClicked = {},
                 )
             }
         }
@@ -485,8 +492,8 @@ internal fun getFakePocketStories(limit: Int = 1): List<PocketStory> {
                         imageUrl = "",
                         timeToRead = index,
                         category = "Category #$index",
-                        timesShown = index.toLong()
-                    )
+                        timesShown = index.toLong(),
+                    ),
                 )
                 false -> add(
                     PocketSponsoredStory(
@@ -501,8 +508,8 @@ internal fun getFakePocketStories(limit: Int = 1): List<PocketStory> {
                             flightCount = index,
                             flightPeriod = index * 2,
                             lifetimeCount = index * 3,
-                        )
-                    )
+                        ),
+                    ),
                 )
             }
         }

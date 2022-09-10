@@ -20,6 +20,7 @@ import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import org.hamcrest.Matchers.allOf
 import org.mozilla.fenix.R
+import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.ext.waitNotNull
 
 class ShareOverlayRobot {
@@ -34,9 +35,9 @@ class ShareOverlayRobot {
                     matches(
                         allOf(
                             hasSibling(withId(R.id.share_tab_favicon)),
-                            hasSibling(withId(R.id.share_tab_url))
-                        )
-                    )
+                            hasSibling(withId(R.id.share_tab_url)),
+                        ),
+                    ),
                 )
         }
     }
@@ -65,8 +66,8 @@ class ShareOverlayRobot {
         Intents.intended(
             allOf(
                 IntentMatchers.hasExtra(Intent.EXTRA_TEXT, text),
-                IntentMatchers.hasExtra(Intent.EXTRA_SUBJECT, subject)
-            )
+                IntentMatchers.hasExtra(Intent.EXTRA_SUBJECT, subject),
+            ),
         )
     }
 
@@ -82,8 +83,8 @@ private fun sendToDeviceTitle() =
     onView(
         allOf(
             withText("SEND TO DEVICE"),
-            withResourceName("accountHeaderText")
-        )
+            withResourceName("accountHeaderText"),
+        ),
     )
 
 private fun assertSendToDeviceTitle() = sendToDeviceTitle()
@@ -93,8 +94,8 @@ private fun shareALinkTitle() =
     onView(
         allOf(
             withText("ALL ACTIONS"),
-            withResourceName("apps_link_header")
-        )
+            withResourceName("apps_link_header"),
+        ),
     )
 
 private fun assertShareALinkTitle() = shareALinkTitle()

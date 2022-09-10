@@ -22,12 +22,14 @@ import org.mozilla.fenix.home.recenttabs.RecentTab
 import org.mozilla.fenix.home.recentvisits.RecentlyVisitedItem
 import org.mozilla.fenix.library.history.PendingDeletionHistory
 import org.mozilla.fenix.gleanplumb.MessagingState
+import org.mozilla.fenix.wallpapers.WallpaperState
 
 /**
  * Value type that represents the state of the tabs tray.
  *
  * @property inactiveTabsExpanded A flag to know if the Inactive Tabs section of the Tabs Tray
  * should be expanded when the tray is opened.
+ * @property firstFrameDrawn Flag indicating whether the first frame of the homescreen has been drawn.
  * @property nonFatalCrashes List of non-fatal crashes that allow the app to continue being used.
  * @property collections The list of [TabCollection] to display in the [HomeFragment].
  * @property expandedCollections A set containing the ids of the [TabCollection] that are expanded
@@ -50,6 +52,7 @@ import org.mozilla.fenix.gleanplumb.MessagingState
  */
 data class AppState(
     val inactiveTabsExpanded: Boolean = false,
+    val firstFrameDrawn: Boolean = false,
     val nonFatalCrashes: List<NativeCodeCrash> = emptyList(),
     val collections: List<TabCollection> = emptyList(),
     val expandedCollections: Set<Long> = emptySet(),
@@ -66,4 +69,5 @@ data class AppState(
     val pocketSponsoredStories: List<PocketSponsoredStory> = emptyList(),
     val messaging: MessagingState = MessagingState(),
     val pendingDeletionHistoryItems: Set<PendingDeletionHistory> = emptySet(),
+    val wallpaperState: WallpaperState = WallpaperState.default,
 ) : State

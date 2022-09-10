@@ -19,9 +19,24 @@ object FeatureFlags {
     val pullToRefreshEnabled = Config.channel.isNightlyOrDebug
 
     /**
-     * Enables the Addresses autofill feature.
+     * Enables the Sync Addresses feature.
      */
-    val addressesFeature = Config.channel.isNightlyOrDebug
+    const val syncAddressesFeature = false
+
+    /**
+     * Enables the onboarding sync CFR on the home screen.
+     */
+    val showSynCFR = Config.channel.isNightlyOrDebug
+
+    /**
+     * Enables the onboarding jump back in CFR on the home screen.
+     */
+    const val showJumpBackInCFR = true
+
+    /**
+     * Enables the first run onboarding updates.
+     */
+    const val showFirstRunOnboardingUpdates = false
 
     /**
      * Enables the "recent" tabs feature in the home screen.
@@ -42,11 +57,6 @@ object FeatureFlags {
      * Identifies and separates the tabs list with a secondary section containing least used tabs.
      */
     const val inactiveTabs = true
-
-    /**
-     * Identifies and separates the tabs list with a group containing search term tabs.
-     */
-    val tabGroupFeature = Config.channel.isNightlyOrDebug
 
     /**
      * Allows tabs to be dragged around as long as tab groups are disabled
@@ -72,7 +82,7 @@ object FeatureFlags {
     /**
      * Enables showing the homescreen onboarding card.
      */
-    const val showHomeOnboarding = false
+    val showHomeOnboarding = Config.channel.isNightlyOrDebug
 
     /**
      * Enables history improvement features.
@@ -80,14 +90,9 @@ object FeatureFlags {
     const val historyImprovementFeatures = true
 
     /**
-     * Separates history into local and synced from other sources.
-     */
-    val showSyncedHistory = Config.channel.isDebug
-
-    /**
      * Enables the Task Continuity enhancements.
      */
-    val taskContinuityFeature = Config.channel.isDebug
+    val taskContinuityFeature = Config.channel.isNightlyOrDebug
 
     /**
      * Enables the Unified Search feature.
@@ -98,4 +103,19 @@ object FeatureFlags {
      * Enables receiving from the messaging framework.
      */
     const val messagingFeature = true
+
+    /**
+     * Enables compose on the tabs tray items.
+     */
+    val composeTabsTray = Config.channel.isDebug
+
+    /**
+     * Enables the wallpaper onboarding.
+     */
+    val wallpaperOnboardingEnabled = Config.channel.isDebug
+
+    /**
+     * Enables the wallpaper v2 enhancements.
+     */
+    val wallpaperV2Enabled = Config.channel.isDebug
 }

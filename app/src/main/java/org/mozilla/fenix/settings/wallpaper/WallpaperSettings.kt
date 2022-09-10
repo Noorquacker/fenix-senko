@@ -4,13 +4,12 @@
 
 package org.mozilla.fenix.settings.wallpaper
 
+import android.annotation.SuppressLint
 import android.graphics.Bitmap
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,12 +27,10 @@ import androidx.compose.material.Snackbar
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.SnackbarHost
 import androidx.compose.material.Surface
-import androidx.compose.material.Switch
-import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,23 +40,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.mozilla.fenix.R
 import org.mozilla.fenix.compose.button.TextButton
-import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.theme.FirefoxTheme
 import org.mozilla.fenix.theme.Theme
 import org.mozilla.fenix.wallpapers.Wallpaper
-import org.mozilla.fenix.wallpapers.WallpaperManager
 
 /**
  * The screen for controlling settings around Wallpapers. When a new wallpaper is selected,
@@ -71,20 +62,17 @@ import org.mozilla.fenix.wallpapers.WallpaperManager
  * @param loadWallpaperResource Callback to handle loading a wallpaper bitmap. Only optional in the default case.
  * @param onSelectWallpaper Callback for when a new wallpaper is selected.
  * @param onViewWallpaper Callback for when the view action is clicked from snackbar.
- * @param tapLogoSwitchChecked Enabled state for switch controlling taps to change wallpaper.
- * @param onTapLogoSwitchCheckedChange Callback for when state of above switch is updated.
  */
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 @Suppress("LongParameterList")
 fun WallpaperSettings(
     wallpapers: List<Wallpaper>,
     defaultWallpaper: Wallpaper,
-    loadWallpaperResource: (Wallpaper) -> Bitmap?,
+    loadWallpaperResource: suspend (Wallpaper) -> Bitmap?,
     selectedWallpaper: Wallpaper,
     onSelectWallpaper: (Wallpaper) -> Unit,
     onViewWallpaper: () -> Unit,
-    tapLogoSwitchChecked: Boolean,
-    onTapLogoSwitchCheckedChange: (Boolean) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val scaffoldState = rememberScaffoldState()
@@ -102,19 +90,18 @@ fun WallpaperSettings(
             WallpaperThumbnails(
                 wallpapers = wallpapers,
                 defaultWallpaper = defaultWallpaper,
-                loadWallpaperResource = loadWallpaperResource,
                 selectedWallpaper = selectedWallpaper,
+                loadWallpaperResource = loadWallpaperResource,
                 onSelectWallpaper = { updatedWallpaper ->
                     coroutineScope.launch {
                         scaffoldState.snackbarHostState.showSnackbar(
                             message = "", // overwritten by WallpaperSnackbar
-                            duration = SnackbarDuration.Short
+                            duration = SnackbarDuration.Short,
                         )
                     }
                     onSelectWallpaper(updatedWallpaper)
                 },
             )
-            WallpaperLogoSwitch(tapLogoSwitchChecked, onCheckedChange = onTapLogoSwitchCheckedChange)
         }
     }
 }
@@ -134,10 +121,9 @@ private fun WallpaperSnackbar(
                 text = stringResource(R.string.wallpaper_updated_snackbar_message),
                 textAlign = TextAlign.Start,
                 color = FirefoxTheme.colors.textOnColorPrimary,
-                fontFamily = FontFamily(Font(R.font.metropolis_semibold)),
-                fontSize = 18.sp,
                 overflow = TextOverflow.Ellipsis,
-                maxLines = 2
+                maxLines = 2,
+                style = FirefoxTheme.typography.headline7,
             )
         },
         action = {
@@ -160,40 +146,48 @@ private fun WallpaperSnackbar(
  * @param selectedWallpaper The currently selected wallpaper.
  * @param numColumns The number of columns that will occupy the grid.
  * @param onSelectWallpaper Action to take when a new wallpaper is selected.
+ * @param verticalPadding Vertical content padding inside the block.
+ * @param horizontalPadding Horizontal content padding inside the block.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 @Suppress("LongParameterList")
-private fun WallpaperThumbnails(
+fun WallpaperThumbnails(
     wallpapers: List<Wallpaper>,
     defaultWallpaper: Wallpaper,
-    loadWallpaperResource: (Wallpaper) -> Bitmap?,
     selectedWallpaper: Wallpaper,
-    numColumns: Int = 3,
+    loadWallpaperResource: suspend (Wallpaper) -> Bitmap?,
     onSelectWallpaper: (Wallpaper) -> Unit,
+    numColumns: Int = 3,
+    verticalPadding: Int = 30,
+    horizontalPadding: Int = 20,
 ) {
-    Surface(color = FirefoxTheme.colors.layer2) {
-        Column(modifier = Modifier.padding(vertical = 30.dp, horizontal = 20.dp)) {
-            val numRows = (wallpapers.size + numColumns - 1) / numColumns
-            for (rowIndex in 0 until numRows) {
-                Row {
-                    for (columnIndex in 0 until numColumns) {
-                        val itemIndex = rowIndex * numColumns + columnIndex
-                        if (itemIndex < wallpapers.size) {
-                            Box(
-                                modifier = Modifier.weight(1f, fill = true).padding(4.dp),
-                            ) {
-                                WallpaperThumbnailItem(
-                                    wallpaper = wallpapers[itemIndex],
-                                    defaultWallpaper = defaultWallpaper,
-                                    loadWallpaperResource = loadWallpaperResource,
-                                    isSelected = selectedWallpaper == wallpapers[itemIndex],
-                                    onSelect = onSelectWallpaper
-                                )
-                            }
-                        } else {
-                            Spacer(Modifier.weight(1f))
+    Column(
+        modifier = Modifier.padding(
+            vertical = verticalPadding.dp,
+            horizontal = horizontalPadding.dp,
+        ),
+    ) {
+        val numRows = (wallpapers.size + numColumns - 1) / numColumns
+        for (rowIndex in 0 until numRows) {
+            Row {
+                for (columnIndex in 0 until numColumns) {
+                    val itemIndex = rowIndex * numColumns + columnIndex
+                    if (itemIndex < wallpapers.size) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f, fill = true)
+                                .padding(4.dp),
+                        ) {
+                            WallpaperThumbnailItem(
+                                wallpaper = wallpapers[itemIndex],
+                                defaultWallpaper = defaultWallpaper,
+                                loadWallpaperResource = loadWallpaperResource,
+                                isSelected = selectedWallpaper == wallpapers[itemIndex],
+                                onSelect = onSelectWallpaper,
+                            )
                         }
+                    } else {
+                        Spacer(Modifier.weight(1f))
                     }
                 }
             }
@@ -214,20 +208,20 @@ private fun WallpaperThumbnails(
 private fun WallpaperThumbnailItem(
     wallpaper: Wallpaper,
     defaultWallpaper: Wallpaper,
-    loadWallpaperResource: (Wallpaper) -> Bitmap?,
+    loadWallpaperResource: suspend (Wallpaper) -> Bitmap?,
     isSelected: Boolean,
     aspectRatio: Float = 1.1f,
-    onSelect: (Wallpaper) -> Unit
+    onSelect: (Wallpaper) -> Unit,
 ) {
-    var bitmap by remember { mutableStateOf(loadWallpaperResource(wallpaper)) }
-    DisposableEffect(LocalConfiguration.current.orientation) {
-        onDispose { bitmap = loadWallpaperResource(wallpaper) }
+    var bitmap: Bitmap? by remember { mutableStateOf(null) }
+    LaunchedEffect(LocalConfiguration.current.orientation) {
+        bitmap = loadWallpaperResource(wallpaper)
     }
     val thumbnailShape = RoundedCornerShape(8.dp)
     val border = if (isSelected) {
         Modifier.border(
             BorderStroke(width = 2.dp, color = FirefoxTheme.colors.borderAccent),
-            thumbnailShape
+            thumbnailShape,
         )
     } else {
         Modifier
@@ -244,14 +238,15 @@ private fun WallpaperThumbnailItem(
             .fillMaxWidth()
             .aspectRatio(aspectRatio)
             .then(border)
-            .clickable { onSelect(wallpaper) }
+            .clickable { onSelect(wallpaper) },
     ) {
         bitmap?.let {
             Image(
                 bitmap = it.asImageBitmap(),
                 contentScale = ContentScale.FillBounds,
                 contentDescription = stringResource(
-                    R.string.wallpapers_item_name_content_description, wallpaper.name
+                    R.string.wallpapers_item_name_content_description,
+                    wallpaper.name,
                 ),
                 modifier = Modifier.fillMaxSize(),
             )
@@ -259,56 +254,17 @@ private fun WallpaperThumbnailItem(
     }
 }
 
-@Composable
-@Suppress("MagicNumber")
-private fun WallpaperLogoSwitch(
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .padding(horizontal = 16.dp, vertical = 16.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(
-            text = stringResource(R.string.wallpaper_tap_to_change_switch_label_1),
-            color = FirefoxTheme.colors.textPrimary,
-            fontSize = 18.sp,
-            modifier = Modifier
-                .weight(0.8f)
-        )
-
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = FirefoxTheme.colors.formSelected,
-                checkedTrackColor = FirefoxTheme.colors.formSurface,
-                uncheckedTrackColor = FirefoxTheme.colors.formSurface
-            )
-        )
-    }
-}
-
 @Preview
 @Composable
 private fun WallpaperThumbnailsPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
-        val context = LocalContext.current
-        val wallpaperManager = context.components.wallpaperManager
-
+    FirefoxTheme(theme = Theme.getTheme()) {
         WallpaperSettings(
-            defaultWallpaper = WallpaperManager.defaultWallpaper,
-            loadWallpaperResource = {
-                wallpaperManager.loadSavedWallpaper(context, it)
-            },
-            wallpapers = wallpaperManager.wallpapers,
-            selectedWallpaper = wallpaperManager.currentWallpaper,
+            defaultWallpaper = Wallpaper.Default,
+            loadWallpaperResource = { null },
+            wallpapers = listOf(Wallpaper.Default),
+            selectedWallpaper = Wallpaper.Default,
             onSelectWallpaper = {},
             onViewWallpaper = {},
-            tapLogoSwitchChecked = false,
-            onTapLogoSwitchCheckedChange = {}
         )
     }
 }
@@ -316,9 +272,9 @@ private fun WallpaperThumbnailsPreview() {
 @Preview
 @Composable
 private fun WallpaperSnackbarPreview() {
-    FirefoxTheme(theme = Theme.getTheme(isPrivate = false)) {
+    FirefoxTheme(theme = Theme.getTheme()) {
         WallpaperSnackbar(
-            onViewWallpaper = {}
+            onViewWallpaper = {},
         )
     }
 }
