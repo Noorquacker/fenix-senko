@@ -5,7 +5,7 @@
 package org.mozilla.fenix.home.recentbookmarks.controller
 
 import androidx.annotation.VisibleForTesting
-import androidx.annotation.VisibleForTesting.PRIVATE
+import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import androidx.navigation.NavController
 import mozilla.appservices.places.BookmarkRoot
 import mozilla.components.concept.engine.EngineSession
@@ -40,6 +40,11 @@ interface RecentBookmarksController {
      * @see [RecentBookmarksInteractor.onRecentBookmarkRemoved]
      */
     fun handleBookmarkRemoved(bookmark: RecentBookmark)
+
+    /**
+     * @see [RecentBookmarksInteractor.onRecentBookmarkLongClicked]
+     */
+    fun handleBookmarkLongClicked()
 }
 
 /**
@@ -72,6 +77,10 @@ class DefaultRecentBookmarksController(
 
     override fun handleBookmarkRemoved(bookmark: RecentBookmark) {
         appStore.dispatch(AppAction.RemoveRecentBookmark(bookmark))
+    }
+
+    override fun handleBookmarkLongClicked() {
+        dismissSearchDialogIfDisplayed()
     }
 
     @VisibleForTesting(otherwise = PRIVATE)

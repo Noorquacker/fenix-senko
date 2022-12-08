@@ -5,6 +5,7 @@
 package org.mozilla.fenix.home
 
 import android.annotation.SuppressLint
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
@@ -27,6 +28,8 @@ import androidx.constraintlayout.widget.ConstraintSet.PARENT_ID
 import androidx.constraintlayout.widget.ConstraintSet.TOP
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
@@ -48,12 +51,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import mozilla.components.browser.menu.view.MenuButton
+import mozilla.components.browser.state.search.SearchEngine
 import mozilla.components.browser.state.selector.findTab
 import mozilla.components.browser.state.selector.normalTabs
 import mozilla.components.browser.state.selector.privateTabs
 import mozilla.components.browser.state.state.BrowserState
+import mozilla.components.browser.state.state.searchEngines
 import mozilla.components.browser.state.state.selectedOrDefaultSearchEngine
 import mozilla.components.browser.state.store.BrowserStore
+import mozilla.components.concept.menu.Orientation
+import mozilla.components.concept.menu.candidate.DrawableMenuIcon
+import mozilla.components.concept.menu.candidate.TextMenuCandidate
 import mozilla.components.concept.storage.FrecencyThresholdOption
 import mozilla.components.concept.sync.AccountObserver
 import mozilla.components.concept.sync.AuthType
@@ -72,8 +80,10 @@ import mozilla.components.support.ktx.kotlinx.coroutines.flow.ifChanged
 import org.mozilla.fenix.Config
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.HomeScreen
+import org.mozilla.fenix.GleanMetrics.UnifiedSearch
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
+import org.mozilla.fenix.addons.showSnackBar
 import org.mozilla.fenix.browser.BrowserAnimator.Companion.getToolbarNavOptions
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.components.FenixSnackbar
@@ -85,9 +95,11 @@ import org.mozilla.fenix.databinding.FragmentHomeBinding
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.containsQueryParameters
 import org.mozilla.fenix.ext.hideToolbar
+import org.mozilla.fenix.ext.increaseTapArea
 import org.mozilla.fenix.ext.nav
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.runIfFragmentIsAttached
+import org.mozilla.fenix.ext.scaleToBottomOfView
 import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.gleanplumb.DefaultMessageController
 import org.mozilla.fenix.gleanplumb.MessagingFeature
@@ -111,11 +123,12 @@ import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.onboarding.FenixOnboarding
 import org.mozilla.fenix.perf.MarkersFragmentLifecycleCallbacks
 import org.mozilla.fenix.perf.runBlockingIncrement
+import org.mozilla.fenix.search.toolbar.SearchSelectorMenu
 import org.mozilla.fenix.tabstray.TabsTrayAccessPoint
 import org.mozilla.fenix.utils.Settings.Companion.TOP_SITES_PROVIDER_MAX_THRESHOLD
 import org.mozilla.fenix.utils.ToolbarPopupWindow
 import org.mozilla.fenix.utils.allowUndo
-import org.mozilla.fenix.wallpapers.WallpaperManager
+import org.mozilla.fenix.wallpapers.Wallpaper
 import java.lang.ref.WeakReference
 import kotlin.math.min
 
@@ -126,7 +139,9 @@ class HomeFragment : Fragment() {
     @VisibleForTesting
     internal lateinit var bundleArgs: Bundle
 
-    private var _binding: FragmentHomeBinding? = null
+    @VisibleForTesting
+    @Suppress("VariableNaming")
+    internal var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
     private val homeViewModel: HomeScreenViewModel by activityViewModels()
@@ -136,6 +151,13 @@ class HomeFragment : Fragment() {
             ToolbarPosition.BOTTOM -> binding.toolbarLayout
             ToolbarPosition.TOP -> null
         }
+
+    private val searchSelectorMenu by lazy {
+        SearchSelectorMenu(
+            context = requireContext(),
+            interactor = sessionControlInteractor,
+        )
+    }
 
     private val browsingModeManager get() = (activity as HomeActivity).browsingModeManager
 
@@ -166,8 +188,7 @@ class HomeFragment : Fragment() {
     private var appBarLayout: AppBarLayout? = null
     private lateinit var currentMode: CurrentMode
 
-    @VisibleForTesting
-    internal var wallpapersObserver: WallpapersObserver? = null
+    private var lastAppliedWallpaperName: String = Wallpaper.defaultName
 
     private val topSitesFeature = ViewBoundFeatureWrapper<TopSitesFeature>()
     private val messagingFeature = ViewBoundFeatureWrapper<MessagingFeature>()
@@ -215,16 +236,8 @@ class HomeFragment : Fragment() {
         val activity = activity as HomeActivity
         val components = requireComponents
 
-        if (shouldEnableWallpaper()) {
-            wallpapersObserver = WallpapersObserver(
-                appStore = components.appStore,
-                settings = requireContext().settings(),
-                wallpapersUseCases = components.useCases.wallpaperUseCases,
-                wallpaperImageView = binding.wallpaperImageView,
-            ).also {
-                viewLifecycleOwner.lifecycle.addObserver(it)
-            }
-        }
+        val currentWallpaperName = requireContext().settings().currentWallpaperName
+        applyWallpaper(wallpaperName = currentWallpaperName, orientationChange = false)
 
         currentMode = CurrentMode(
             requireContext(),
@@ -258,7 +271,7 @@ class HomeFragment : Fragment() {
         if (requireContext().settings().isExperimentationEnabled) {
             messagingFeature.set(
                 feature = MessagingFeature(
-                    store = requireComponents.appStore,
+                    appStore = requireComponents.appStore,
                 ),
                 owner = viewLifecycleOwner,
                 view = binding.root,
@@ -269,7 +282,7 @@ class HomeFragment : Fragment() {
             topSitesFeature.set(
                 feature = TopSitesFeature(
                     view = DefaultTopSitesView(
-                        store = components.appStore,
+                        appStore = components.appStore,
                         settings = components.settings,
                     ),
                     storage = components.core.topSitesStorage,
@@ -332,6 +345,24 @@ class HomeFragment : Fragment() {
                 owner = viewLifecycleOwner,
                 view = binding.root,
             )
+        }
+
+        requireContext().settings().showUnifiedSearchFeature.let {
+            binding.searchSelector.isVisible = it
+            binding.searchEngineIcon.isGone = it
+        }
+
+        binding.searchSelector.apply {
+            setOnClickListener {
+                val orientation = if (context.settings().shouldUseBottomToolbar) {
+                    Orientation.UP
+                } else {
+                    Orientation.DOWN
+                }
+
+                UnifiedSearch.searchMenuTapped.record(NoExtras())
+                searchSelectorMenu.menuController.show(anchor = it, orientation = orientation, forceOrientation = true)
+            }
         }
 
         _sessionControlInteractor = SessionControlInteractor(
@@ -419,16 +450,8 @@ class HomeFragment : Fragment() {
 
         getMenuButton()?.dismissMenu()
 
-        val isDefaultTheCurrentWallpaper = WallpaperManager.isDefaultTheCurrentWallpaper(requireContext().settings())
-        if (shouldEnableWallpaper() && !isDefaultTheCurrentWallpaper) {
-            // Running this on the Main thread helps to ensure that the just updated configuration
-            // will be used when the wallpaper is scaled to match.
-            // Otherwise the portrait wallpaper may remain shown on landscape,
-            // see https://github.com/mozilla-mobile/fenix/issues/26638
-            runBlockingIncrement {
-                wallpapersObserver?.applyCurrentWallpaper()
-            }
-        }
+        val currentWallpaperName = requireContext().settings().currentWallpaperName
+        applyWallpaper(wallpaperName = currentWallpaperName, orientationChange = true)
     }
 
     /**
@@ -523,6 +546,7 @@ class HomeFragment : Fragment() {
 
         observeSearchEngineChanges()
         observeSearchEngineNameChanges()
+        observeWallpaperUpdates()
 
         HomeMenuBuilder(
             view = view,
@@ -605,6 +629,14 @@ class HomeFragment : Fragment() {
             }
         }
 
+        consumeFlow(requireComponents.core.store) { flow ->
+            flow.map { state -> state.search }
+                .ifChanged()
+                .collect { search ->
+                    updateSearchSelectorMenu(search.searchEngines)
+                }
+        }
+
         // DO NOT MOVE ANYTHING BELOW THIS addMarker CALL!
         requireComponents.core.engine.profiler?.addMarker(
             MarkersFragmentLifecycleCallbacks.MARKER_NAME,
@@ -613,20 +645,42 @@ class HomeFragment : Fragment() {
         )
     }
 
+    private fun updateSearchSelectorMenu(searchEngines: List<SearchEngine>) {
+        val searchEngineList = searchEngines
+            .map {
+                TextMenuCandidate(
+                    text = it.name,
+                    start = DrawableMenuIcon(
+                        drawable = it.icon.toDrawable(resources),
+                    ),
+                ) {
+                    sessionControlInteractor.onMenuItemTapped(SearchSelectorMenu.Item.SearchEngine(it))
+                }
+            }
+
+        searchSelectorMenu.menuController.submitList(searchSelectorMenu.menuItems(searchEngineList))
+    }
+
     private fun observeSearchEngineChanges() {
         consumeFlow(store) { flow ->
             flow.map { state -> state.search.selectedOrDefaultSearchEngine }
                 .ifChanged()
                 .collect { searchEngine ->
-                    if (searchEngine != null) {
+                    val name = searchEngine?.name
+                    val icon = searchEngine?.let {
+                        // Changing dimensions doesn't not affect the icon size, not sure what the
+                        // code is doing:  https://github.com/mozilla-mobile/fenix/issues/27763
                         val iconSize =
                             requireContext().resources.getDimensionPixelSize(R.dimen.preference_icon_drawable_size)
-                        val searchIcon =
-                            BitmapDrawable(requireContext().resources, searchEngine.icon)
-                        searchIcon.setBounds(0, 0, iconSize, iconSize)
-                        binding.searchEngineIcon.setImageDrawable(searchIcon)
+                        BitmapDrawable(requireContext().resources, searchEngine.icon).apply {
+                            setBounds(0, 0, iconSize, iconSize)
+                        }
+                    }
+
+                    if (requireContext().settings().showUnifiedSearchFeature) {
+                        binding.searchSelector.setIcon(icon, name)
                     } else {
-                        binding.searchEngineIcon.setImageDrawable(null)
+                        binding.searchEngineIcon.setImageDrawable(icon)
                     }
                 }
         }
@@ -710,9 +764,9 @@ class HomeFragment : Fragment() {
         _sessionControlInteractor = null
         sessionControlView = null
         appBarLayout = null
-        wallpapersObserver = null
         _binding = null
         bundleArgs.clear()
+        lastAppliedWallpaperName = Wallpaper.defaultName
     }
 
     override fun onStart() {
@@ -766,13 +820,6 @@ class HomeFragment : Fragment() {
 
         lifecycleScope.launch(IO) {
             requireComponents.reviewPromptController.promptReview(requireActivity())
-        }
-
-        val isDefaultTheCurrentWallpaper = WallpaperManager.isDefaultTheCurrentWallpaper(requireContext().settings())
-        if (shouldEnableWallpaper() && !isDefaultTheCurrentWallpaper) {
-            runBlockingIncrement {
-                wallpapersObserver?.applyCurrentWallpaper()
-            }
         }
     }
 
@@ -853,6 +900,8 @@ class HomeFragment : Fragment() {
                     true,
                 )
             layout.findViewById<Button>(R.id.cfr_pos_button).apply {
+                this.increaseTapArea(CFR_TAP_INCREASE_DPS)
+
                 setOnClickListener {
                     PrivateShortcutCreateManager.createPrivateShortcut(context)
                     privateBrowsingRecommend.dismiss()
@@ -962,6 +1011,67 @@ class HomeFragment : Fragment() {
     internal fun shouldEnableWallpaper() =
         (activity as? HomeActivity)?.themeManager?.currentTheme?.isPrivate?.not() ?: false
 
+    private fun applyWallpaper(wallpaperName: String, orientationChange: Boolean) {
+        when {
+            !shouldEnableWallpaper() ||
+                (wallpaperName == lastAppliedWallpaperName && !orientationChange) -> return
+            Wallpaper.nameIsDefault(wallpaperName) -> {
+                binding.wallpaperImageView.isVisible = false
+                lastAppliedWallpaperName = wallpaperName
+            }
+            else -> {
+                runBlockingIncrement {
+                    // loadBitmap does file lookups based on name, so we don't need a fully
+                    // qualified type to load the image
+                    val wallpaper = Wallpaper.Default.copy(name = wallpaperName)
+                    val wallpaperImage =
+                        requireComponents.useCases.wallpaperUseCases.loadBitmap(wallpaper)
+                    wallpaperImage?.let {
+                        it.scaleToBottomOfView(binding.wallpaperImageView)
+                        binding.wallpaperImageView.isVisible = true
+                        lastAppliedWallpaperName = wallpaperName
+                    } ?: run {
+                        with(binding.wallpaperImageView) {
+                            isVisible = false
+                            showSnackBar(
+                                view = this,
+                                text = resources.getString(R.string.wallpaper_select_error_snackbar_message),
+                            )
+                        }
+                        // If setting a wallpaper failed reset also the contrasting text color.
+                        requireContext().settings().currentWallpaperTextColor = 0L
+                        lastAppliedWallpaperName = Wallpaper.defaultName
+                    }
+                }
+            }
+        }
+        // Logo color should be updated in all cases.
+        applyWallpaperTextColor()
+    }
+
+    /**
+     * Apply a color better contrasting with the current wallpaper to the Fenix logo and private mode switcher.
+     */
+    @VisibleForTesting
+    internal fun applyWallpaperTextColor() {
+        val tintColor = when (val color = requireContext().settings().currentWallpaperTextColor.toInt()) {
+            0 -> null // a null ColorStateList will clear the current tint
+            else -> ColorStateList.valueOf(color)
+        }
+
+        binding.wordmarkText.imageTintList = tintColor
+        binding.privateBrowsingButton.imageTintList = tintColor
+    }
+
+    private fun observeWallpaperUpdates() {
+        consumeFrom(requireComponents.appStore) {
+            val currentWallpaper = it.wallpaperState.currentWallpaper
+            if (currentWallpaper.name != lastAppliedWallpaperName) {
+                applyWallpaper(wallpaperName = currentWallpaper.name, orientationChange = false)
+            }
+        }
+    }
+
     companion object {
         const val ALL_NORMAL_TABS = "all_normal"
         const val ALL_PRIVATE_TABS = "all_private"
@@ -973,6 +1083,8 @@ class HomeFragment : Fragment() {
 
         private const val CFR_WIDTH_DIVIDER = 1.7
         private const val CFR_Y_OFFSET = -20
+
+        private const val CFR_TAP_INCREASE_DPS = 6
 
         // Sponsored top sites titles and search engine names used for filtering
         const val AMAZON_SPONSORED_TITLE = "Amazon"

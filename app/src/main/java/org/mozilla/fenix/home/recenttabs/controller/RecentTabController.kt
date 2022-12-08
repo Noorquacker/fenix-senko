@@ -5,7 +5,7 @@
 package org.mozilla.fenix.home.recenttabs.controller
 
 import androidx.annotation.VisibleForTesting
-import androidx.annotation.VisibleForTesting.PRIVATE
+import androidx.annotation.VisibleForTesting.Companion.PRIVATE
 import androidx.navigation.NavController
 import mozilla.components.browser.state.store.BrowserStore
 import mozilla.components.feature.tabs.TabsUseCases.SelectTabUseCase
@@ -28,6 +28,11 @@ interface RecentTabController {
      * @see [RecentTabInteractor.onRecentTabClicked]
      */
     fun handleRecentTabClicked(tabId: String)
+
+    /**
+     * @see [RecentTabInteractor.onRecentTabLongClicked]
+     */
+    fun handleRecentTabLongClicked()
 
     /**
      * @see [RecentTabInteractor.onRecentTabShowAllClicked]
@@ -62,6 +67,10 @@ class DefaultRecentTabsController(
 
         selectTabUseCase.invoke(tabId)
         navController.navigate(R.id.browserFragment)
+    }
+
+    override fun handleRecentTabLongClicked() {
+        dismissSearchDialogIfDisplayed()
     }
 
     override fun handleRecentTabShowAllClicked() {

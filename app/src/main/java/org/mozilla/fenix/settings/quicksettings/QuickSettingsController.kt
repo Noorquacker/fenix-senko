@@ -98,16 +98,14 @@ interface QuickSettingsController {
  * specific Android runtime permissions.
  * @param displayPermissions callback for when [WebsitePermissionsView] needs to be displayed.
  */
-@Suppress("TooManyFunctions")
+@Suppress("TooManyFunctions", "LongParameterList")
 class DefaultQuickSettingsController(
     private val context: Context,
     private val quickSettingsStore: QuickSettingsFragmentStore,
     private val browserStore: BrowserStore,
     private val ioScope: CoroutineScope,
     private val navController: NavController,
-    @VisibleForTesting
     internal val sessionId: String,
-    @VisibleForTesting
     internal var sitePermissions: SitePermissions?,
     private val settings: Settings,
     private val permissionStorage: PermissionStorage,
@@ -265,8 +263,11 @@ class DefaultQuickSettingsController(
      */
     @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
     fun handlePermissionsChange(updatedPermissions: SitePermissions) {
+        val tab = requireNotNull(browserStore.state.findTabOrCustomTab(sessionId)) {
+            "A session is required to update permission"
+        }
         ioScope.launch {
-            permissionStorage.updateSitePermissions(updatedPermissions)
+            permissionStorage.updateSitePermissions(updatedPermissions, tab.content.private)
             reload(sessionId)
         }
     }

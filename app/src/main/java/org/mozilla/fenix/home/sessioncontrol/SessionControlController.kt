@@ -40,6 +40,7 @@ import org.mozilla.fenix.GleanMetrics.RecentTabs
 import org.mozilla.fenix.GleanMetrics.TopSites
 import org.mozilla.fenix.HomeActivity
 import org.mozilla.fenix.R
+import org.mozilla.fenix.browser.BrowserAnimator
 import org.mozilla.fenix.browser.BrowserFragmentDirections
 import org.mozilla.fenix.browser.browsingmode.BrowsingMode
 import org.mozilla.fenix.collections.SaveCollectionStep
@@ -56,7 +57,9 @@ import org.mozilla.fenix.gleanplumb.MessageController
 import org.mozilla.fenix.home.HomeFragment
 import org.mozilla.fenix.home.HomeFragmentDirections
 import org.mozilla.fenix.home.Mode
-import org.mozilla.fenix.onboarding.WallpaperOnboardingDialogFragment
+import org.mozilla.fenix.onboarding.WallpaperOnboardingDialogFragment.Companion.THUMBNAILS_SELECTION_COUNT
+import org.mozilla.fenix.search.toolbar.SearchSelectorInteractor
+import org.mozilla.fenix.search.toolbar.SearchSelectorMenu
 import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.settings.SupportUtils.SumoTopic.PRIVATE_BROWSING_MYTHS
 import org.mozilla.fenix.utils.Settings
@@ -209,6 +212,11 @@ interface SessionControlController {
      * @see [SessionControlInteractor.reportSessionMetrics]
      */
     fun handleReportSessionMetrics(state: AppState)
+
+    /**
+     * @see [SearchSelectorInteractor.onMenuItemTapped]
+     */
+    fun handleMenuItemTapped(item: SearchSelectorMenu.Item)
 }
 
 @Suppress("TooManyFunctions", "LargeClass", "LongParameterList")
@@ -510,16 +518,23 @@ class DefaultSessionControlController(
     }
 
     override fun handleShowWallpapersOnboardingDialog(state: WallpaperState): Boolean {
-        if (state.availableWallpapers.all { it.thumbnailFileState == Wallpaper.ImageFileState.Downloaded } &&
-            state.availableWallpapers.size >= WallpaperOnboardingDialogFragment.THUMBNAILS_COUNT
-        ) {
-            navController.nav(
-                R.id.homeFragment,
-                HomeFragmentDirections.actionGlobalWallpaperOnboardingDialog(),
-            )
-            return true
+        return if (activity.browsingModeManager.mode.isPrivate) {
+            false
+        } else {
+            state.availableWallpapers.filter { wallpaper ->
+                wallpaper.thumbnailFileState == Wallpaper.ImageFileState.Downloaded
+            }.size.let { downloadedCount ->
+                // We only display the dialog if enough thumbnails have been downloaded for it.
+                downloadedCount >= THUMBNAILS_SELECTION_COUNT
+            }.also { showOnboarding ->
+                if (showOnboarding) {
+                    navController.nav(
+                        R.id.homeFragment,
+                        HomeFragmentDirections.actionGlobalWallpaperOnboardingDialog(),
+                    )
+                }
+            }
         }
-        return false
     }
 
     override fun handleReadPrivacyNoticeClicked() {
@@ -576,6 +591,7 @@ class DefaultSessionControlController(
 
     private fun showShareFragment(shareSubject: String, data: List<ShareData>) {
         val directions = HomeFragmentDirections.actionGlobalShareFragment(
+            sessionId = store.state.selectedTabId,
             shareSubject = shareSubject,
             data = data.toTypedArray(),
         )
@@ -651,5 +667,27 @@ class DefaultSessionControlController(
         }
 
         RecentBookmarks.recentBookmarksCount.set(state.recentBookmarks.size.toLong())
+    }
+
+    override fun handleMenuItemTapped(item: SearchSelectorMenu.Item) {
+        when (item) {
+            SearchSelectorMenu.Item.SearchSettings -> {
+                navController.nav(
+                    R.id.homeFragment,
+                    HomeFragmentDirections.actionGlobalSearchEngineFragment(),
+                )
+            }
+            is SearchSelectorMenu.Item.SearchEngine -> {
+                val directions = HomeFragmentDirections.actionGlobalSearchDialog(
+                    sessionId = null,
+                    searchEngine = item.searchEngine.id,
+                )
+                navController.nav(
+                    R.id.homeFragment,
+                    directions,
+                    BrowserAnimator.getToolbarNavOptions(activity),
+                )
+            }
+        }
     }
 }

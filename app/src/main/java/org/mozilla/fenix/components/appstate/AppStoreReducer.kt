@@ -211,7 +211,7 @@ internal object AppStoreReducer {
             )
         is AppAction.WallpaperAction.UpdateWallpaperDownloadState -> {
             val wallpapers = state.wallpaperState.availableWallpapers.map {
-                if (it == action.wallpaper) {
+                if (it.name == action.wallpaper.name) {
                     it.copy(assetsFileState = action.imageState)
                 } else {
                     it
@@ -220,6 +220,7 @@ internal object AppStoreReducer {
             val wallpaperState = state.wallpaperState.copy(availableWallpapers = wallpapers)
             state.copy(wallpaperState = wallpaperState)
         }
+        is AppAction.ResumedMetricsAction -> state
     }
 }
 

@@ -14,7 +14,6 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.mozilla.fenix.helpers.AndroidAssetDispatcher
-import org.mozilla.fenix.helpers.FeatureSettingsHelper
 import org.mozilla.fenix.helpers.HomeActivityTestRule
 import org.mozilla.fenix.helpers.RetryTestRule
 import org.mozilla.fenix.helpers.TestAssetHelper
@@ -43,11 +42,10 @@ import org.mozilla.fenix.ui.robots.notificationShade
 class TabbedBrowsingTest {
     private lateinit var mDevice: UiDevice
     private lateinit var mockWebServer: MockWebServer
-    private val featureSettingsHelper = FeatureSettingsHelper()
 
     /* ktlint-disable no-blank-line-before-rbrace */ // This imposes unreadable grouping.
     @get:Rule
-    val activityTestRule = HomeActivityTestRule()
+    val activityTestRule = HomeActivityTestRule.withDefaultSettingsOverrides()
 
     @Rule
     @JvmField
@@ -55,11 +53,6 @@ class TabbedBrowsingTest {
 
     @Before
     fun setUp() {
-        // disabling the new homepage pop-up that interferes with the tests.
-        featureSettingsHelper.setJumpBackCFREnabled(false)
-        featureSettingsHelper.setTCPCFREnabled(false)
-        featureSettingsHelper.setShowWallpaperOnboarding(false)
-
         mDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
         mockWebServer = MockWebServer().apply {
             dispatcher = AndroidAssetDispatcher()
@@ -70,11 +63,9 @@ class TabbedBrowsingTest {
     @After
     fun tearDown() {
         mockWebServer.shutdown()
-        featureSettingsHelper.resetAllFeatureFlags()
     }
 
     @Test
-    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun openNewTabTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -99,7 +90,6 @@ class TabbedBrowsingTest {
     }
 
     @Test
-    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun openNewPrivateTabTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -120,7 +110,6 @@ class TabbedBrowsingTest {
     }
 
     @Test
-    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun closeAllTabsTest() {
         val defaultWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -185,11 +174,12 @@ class TabbedBrowsingTest {
     }
 
     @Test
-    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun verifyUndoSnackBarTest() {
         // disabling these features because they interfere with the snackbar visibility
-        featureSettingsHelper.setPocketEnabled(false)
-        featureSettingsHelper.setRecentTabsFeatureEnabled(false)
+        activityTestRule.applySettingsExceptions {
+            it.isPocketEnabled = false
+            it.isRecentTabsFeatureEnabled = false
+        }
 
         val genericURL = TestAssetHelper.getGenericAsset(mockWebServer, 1)
 
@@ -364,7 +354,7 @@ class TabbedBrowsingTest {
             // dismiss search dialog
             homeScreen { }.pressBack()
             verifyPrivateSessionMessage()
-            verifyHomeToolbar()
+            verifyNavigationToolbar()
         }
         navigationToolbar {
         }.enterURLAndEnterToBrowser(defaultWebPage.url) {
@@ -375,7 +365,7 @@ class TabbedBrowsingTest {
             // dismiss search dialog
             homeScreen { }.pressBack()
             verifyHomeWordmark()
-            verifyHomeToolbar()
+            verifyNavigationToolbar()
         }
     }
 }

@@ -6,6 +6,8 @@
 
 package org.mozilla.fenix.ui.robots
 
+import android.content.Intent
+import android.net.Uri
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.ViewInteraction
@@ -14,7 +16,8 @@ import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.intent.Intents.intended
 import androidx.test.espresso.intent.matcher.IntentMatchers
-import androidx.test.espresso.intent.matcher.IntentMatchers.toPackage
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasAction
+import androidx.test.espresso.intent.matcher.IntentMatchers.hasData
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.Visibility
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
@@ -33,6 +36,7 @@ import androidx.test.uiautomator.UiObject
 import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
+import junit.framework.AssertionFailedError
 import org.hamcrest.CoreMatchers
 import org.hamcrest.Matchers.allOf
 import org.hamcrest.Matchers.endsWith
@@ -40,6 +44,7 @@ import org.junit.Assert.assertTrue
 import org.mozilla.fenix.R
 import org.mozilla.fenix.helpers.Constants.LISTS_MAXSWIPES
 import org.mozilla.fenix.helpers.Constants.PackageName.GOOGLE_PLAY_SERVICES
+import org.mozilla.fenix.helpers.Constants.RETRY_COUNT
 import org.mozilla.fenix.helpers.TestAssetHelper.waitingTime
 import org.mozilla.fenix.helpers.TestHelper.appName
 import org.mozilla.fenix.helpers.TestHelper.getStringResource
@@ -49,6 +54,7 @@ import org.mozilla.fenix.helpers.TestHelper.mDevice
 import org.mozilla.fenix.helpers.TestHelper.packageName
 import org.mozilla.fenix.helpers.TestHelper.scrollToElementByText
 import org.mozilla.fenix.helpers.click
+import org.mozilla.fenix.settings.SupportUtils
 import org.mozilla.fenix.ui.robots.SettingsRobot.Companion.DEFAULT_APPS_SETTINGS_ACTION
 
 /**
@@ -128,7 +134,6 @@ class SettingsRobot {
         fun openAboutFirefoxPreview(interact: SettingsSubMenuAboutRobot.() -> Unit):
             SettingsSubMenuAboutRobot.Transition {
             aboutFirefoxHeading().click()
-
             SettingsSubMenuAboutRobot().interact()
             return SettingsSubMenuAboutRobot.Transition()
         }
@@ -571,7 +576,21 @@ private fun rateOnGooglePlayHeading(): UiObject {
 }
 
 private fun aboutFirefoxHeading(): UiObject {
-    settingsList().scrollToEnd(LISTS_MAXSWIPES)
+    for (i in 1..RETRY_COUNT) {
+        try {
+            settingsList().scrollToEnd(LISTS_MAXSWIPES)
+            assertTrue(
+                mDevice.findObject(UiSelector().text("About $appName"))
+                    .waitForExists(waitingTime),
+            )
+
+            break
+        } catch (e: AssertionError) {
+            if (i == RETRY_COUNT) {
+                throw e
+            }
+        }
+    }
     return mDevice.findObject(UiSelector().text("About $appName"))
 }
 
@@ -583,7 +602,16 @@ fun clickRateButtonGooglePlay() {
 
 private fun assertGooglePlayRedirect() {
     if (isPackageInstalled(GOOGLE_PLAY_SERVICES)) {
-        intended(toPackage(GOOGLE_PLAY_SERVICES))
+        try {
+            intended(
+                allOf(
+                    hasAction(Intent.ACTION_VIEW),
+                    hasData(Uri.parse(SupportUtils.RATE_APP_URL)),
+                ),
+            )
+        } catch (e: AssertionFailedError) {
+            BrowserRobot().verifyRateOnGooglePlayURL()
+        }
     } else {
         BrowserRobot().verifyRateOnGooglePlayURL()
     }

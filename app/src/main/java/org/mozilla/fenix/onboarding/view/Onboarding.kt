@@ -96,7 +96,7 @@ fun Onboarding(
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.mozac_ic_close),
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.onboarding_home_content_description_close_button),
                     tint = FirefoxTheme.colors.iconPrimary,
                 )
             }
@@ -175,7 +175,7 @@ private fun OnboardingWelcomeContent() {
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = stringResource(id = R.string.onboarding_home_welcome_title),
+            text = stringResource(id = R.string.onboarding_home_welcome_title_2),
             color = FirefoxTheme.colors.textPrimary,
             textAlign = TextAlign.Center,
             style = FirefoxTheme.typography.headline5,
@@ -206,7 +206,7 @@ private fun OnboardingSyncSignInContent() {
         Spacer(modifier = Modifier.height(32.dp))
 
         Text(
-            text = stringResource(id = R.string.onboarding_home_sync_title_2),
+            text = stringResource(id = R.string.onboarding_home_sync_title_3),
             color = FirefoxTheme.colors.textPrimary,
             textAlign = TextAlign.Center,
             style = FirefoxTheme.typography.headline5,

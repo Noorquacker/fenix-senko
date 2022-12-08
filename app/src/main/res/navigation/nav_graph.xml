@@ -31,8 +31,7 @@
 
     <action
         android:id="@+id/action_global_home_onboarding_dialog"
-        app:destination="@id/homeOnboardingDialogFragment"
-        app:popUpTo="@id/homeFragment" />
+        app:destination="@id/homeOnboardingDialogFragment" />
 
     <action
         android:id="@+id/action_global_wallpaper_onboarding_dialog"
@@ -215,6 +214,11 @@
             android:name="search_access_point"
             android:defaultValue="NONE"
             app:argType="org.mozilla.fenix.components.metrics.MetricsUtils$Source" />
+        <argument
+            android:name="search_engine"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
     </dialog>
 
     <fragment
@@ -600,6 +604,13 @@
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right" />
         <action
+            android:id="@+id/action_settingsFragment_to_cookieBannerFragment"
+            app:destination="@id/cookieBannerFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+        <action
             android:id="@+id/action_settingsFragment_to_trackingProtectionFragment"
             app:destination="@id/trackingProtectionFragment"
             app:enterAnim="@anim/slide_in_right"
@@ -814,6 +825,10 @@
         android:name="org.mozilla.fenix.settings.HttpsOnlyFragment"
         android:label="@string/preferences_https_only_title" />
     <fragment
+        android:id="@+id/cookieBannerFragment"
+        android:name="org.mozilla.fenix.settings.CookieBannersFragment"
+        android:label="@string/preferences_cookie_banner_reduction" />
+    <fragment
         android:id="@+id/trackingProtectionFragment"
         android:name="org.mozilla.fenix.settings.TrackingProtectionFragment">
         <action
@@ -895,7 +910,7 @@
             app:destination="@id/addNewDeviceFragment" />
         <argument
             android:name="sessionId"
-            android:defaultValue="null"
+            android:defaultValue="@null"
             app:argType="string"
             app:nullable="true" />
         <argument

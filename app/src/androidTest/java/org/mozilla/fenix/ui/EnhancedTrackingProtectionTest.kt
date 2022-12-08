@@ -4,6 +4,7 @@
 
 package org.mozilla.fenix.ui
 
+import androidx.core.net.toUri
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Before
@@ -11,10 +12,12 @@ import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.mozilla.fenix.customannotations.SmokeTest
+import org.mozilla.fenix.ext.settings
 import org.mozilla.fenix.helpers.AndroidAssetDispatcher
-import org.mozilla.fenix.helpers.FeatureSettingsHelper
 import org.mozilla.fenix.helpers.HomeActivityTestRule
 import org.mozilla.fenix.helpers.TestAssetHelper
+import org.mozilla.fenix.helpers.TestHelper.appContext
+import org.mozilla.fenix.helpers.TestHelper.exitMenu
 import org.mozilla.fenix.ui.robots.enhancedTrackingProtection
 import org.mozilla.fenix.ui.robots.homeScreen
 import org.mozilla.fenix.ui.robots.navigationToolbar
@@ -33,12 +36,15 @@ import org.mozilla.fenix.ui.robots.settingsSubMenuEnhancedTrackingProtection
  *  - Verifying Enhanced Tracking Protection site exceptions
  */
 
-class StrictEnhancedTrackingProtectionTest {
+class EnhancedTrackingProtectionTest {
     private lateinit var mockWebServer: MockWebServer
-    private val featureSettingsHelper = FeatureSettingsHelper()
 
     @get:Rule
-    val activityTestRule = HomeActivityTestRule()
+    val activityTestRule = HomeActivityTestRule(
+        isJumpBackInCFREnabled = false,
+        isTCPCFREnabled = false,
+        isWallpaperOnboardingEnabled = false,
+    )
 
     @Before
     fun setUp() {
@@ -46,16 +52,11 @@ class StrictEnhancedTrackingProtectionTest {
             dispatcher = AndroidAssetDispatcher()
             start()
         }
-        featureSettingsHelper.setStrictETPEnabled()
-        featureSettingsHelper.setJumpBackCFREnabled(false)
-        featureSettingsHelper.setTCPCFREnabled(false)
-        featureSettingsHelper.setShowWallpaperOnboarding(false)
     }
 
     @After
     fun tearDown() {
         mockWebServer.shutdown()
-        featureSettingsHelper.resetAllFeatureFlags()
     }
 
     @Test
@@ -85,8 +86,8 @@ class StrictEnhancedTrackingProtectionTest {
         }.openEnhancedTrackingProtectionSubMenu {
             switchEnhancedTrackingProtectionToggle()
             verifyEnhancedTrackingProtectionOptionsEnabled(false)
-        }.goBack {
-        }.goBack { }
+            exitMenu()
+        }
 
         navigationToolbar {
         }.enterURLAndEnterToBrowser(genericPage.url) { }
@@ -108,8 +109,8 @@ class StrictEnhancedTrackingProtectionTest {
     }
 
     @Test
-    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun testStrictVisitProtectionSheet() {
+        appContext.settings().setStrictETP()
         val genericPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
         val trackingProtectionTest =
             TestAssetHelper.getEnhancedTrackingProtectionAsset(mockWebServer)
@@ -129,9 +130,9 @@ class StrictEnhancedTrackingProtectionTest {
         }
     }
 
-    @Ignore("Failing with frequent ANR: https://bugzilla.mozilla.org/show_bug.cgi?id=1764605")
     @Test
     fun testStrictVisitDisableExceptionToggle() {
+        appContext.settings().setStrictETP()
         val genericPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
         val trackingProtectionTest =
             TestAssetHelper.getEnhancedTrackingProtectionAsset(mockWebServer)
@@ -164,9 +165,10 @@ class StrictEnhancedTrackingProtectionTest {
         }
     }
 
+    @Ignore("Permanent failure: https://github.com/mozilla-mobile/fenix/issues/27312")
     @Test
-    @Ignore("Failing after compose migration. See: https://github.com/mozilla-mobile/fenix/issues/26087")
     fun testStrictVisitSheetDetails() {
+        appContext.settings().setStrictETP()
         val genericPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
         val trackingProtectionTest =
             TestAssetHelper.getEnhancedTrackingProtectionAsset(mockWebServer)
@@ -192,6 +194,73 @@ class StrictEnhancedTrackingProtectionTest {
             verifyFingerprintersBlocked()
             verifyTrackingContentBlocked()
             viewTrackingContentBlockList()
+        }
+    }
+
+    @Ignore("Permanent failure: https://github.com/mozilla-mobile/fenix/issues/27312")
+    @SmokeTest
+    @Test
+    fun customTrackingProtectionSettingsTest() {
+        val genericWebPage = TestAssetHelper.getGenericAsset(mockWebServer, 1)
+        val trackingPage = TestAssetHelper.getEnhancedTrackingProtectionAsset(mockWebServer)
+
+        homeScreen {
+        }.openThreeDotMenu {
+        }.openSettings {
+        }.openEnhancedTrackingProtectionSubMenu {
+            verifyEnhancedTrackingProtectionOptionsEnabled()
+            selectTrackingProtectionOption("Custom")
+            verifyCustomTrackingProtectionSettings()
+        }.goBackToHomeScreen {}
+
+        navigationToolbar {
+            // browsing a basic page to allow GV to load on a fresh run
+        }.enterURLAndEnterToBrowser(genericWebPage.url) {
+        }.openNavigationToolbar {
+        }.enterURLAndEnterToBrowser(trackingPage.url) {}
+
+        enhancedTrackingProtection {
+        }.openEnhancedTrackingProtectionSheet {
+        }.openDetails {
+            verifyTrackingCookiesBlocked()
+            verifyCryptominersBlocked()
+            verifyFingerprintersBlocked()
+            verifyTrackingContentBlocked()
+            viewTrackingContentBlockList()
+        }
+    }
+
+    @SmokeTest
+    @Test
+    fun blockCookiesStorageAccessTest() {
+        // With Standard TrackingProtection settings
+        val page = mockWebServer.url("pages/cross-site-cookies.html").toString().toUri()
+        val originSite = "https://mozilla-mobile.github.io"
+        val currentSite = "http://localhost:${mockWebServer.port}"
+
+        navigationToolbar {
+        }.enterURLAndEnterToBrowser(page) {
+        }.clickRequestStorageAccessButton {
+            verifyCrossOriginCookiesPermissionPrompt(originSite, currentSite)
+        }.clickPagePermissionButton(allow = false) {
+            verifyPageContent("access denied")
+        }
+    }
+
+    @SmokeTest
+    @Test
+    fun allowCookiesStorageAccessTest() {
+        // With Standard TrackingProtection settings
+        val page = mockWebServer.url("pages/cross-site-cookies.html").toString().toUri()
+        val originSite = "https://mozilla-mobile.github.io"
+        val currentSite = "http://localhost:${mockWebServer.port}"
+
+        navigationToolbar {
+        }.enterURLAndEnterToBrowser(page) {
+        }.clickRequestStorageAccessButton {
+            verifyCrossOriginCookiesPermissionPrompt(originSite, currentSite)
+        }.clickPagePermissionButton(allow = true) {
+            verifyPageContent("access granted")
         }
     }
 }

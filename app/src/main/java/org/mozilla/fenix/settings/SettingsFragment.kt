@@ -38,7 +38,9 @@ import mozilla.components.service.glean.private.NoExtras
 import mozilla.components.support.ktx.android.view.showKeyboard
 import org.mozilla.fenix.BrowserDirection
 import org.mozilla.fenix.Config
+import org.mozilla.fenix.FeatureFlags
 import org.mozilla.fenix.GleanMetrics.Addons
+import org.mozilla.fenix.GleanMetrics.CookieBanners
 import org.mozilla.fenix.GleanMetrics.Events
 import org.mozilla.fenix.GleanMetrics.TrackingProtection
 import org.mozilla.fenix.HomeActivity
@@ -48,9 +50,9 @@ import org.mozilla.fenix.ext.application
 import org.mozilla.fenix.ext.components
 import org.mozilla.fenix.ext.getPreferenceKey
 import org.mozilla.fenix.ext.navigateToNotificationsSettings
+import org.mozilla.fenix.ext.openSetDefaultBrowserOption
 import org.mozilla.fenix.ext.requireComponents
 import org.mozilla.fenix.ext.settings
-import org.mozilla.fenix.ext.openSetDefaultBrowserOption
 import org.mozilla.fenix.ext.showToolbar
 import org.mozilla.fenix.nimbus.FxNimbus
 import org.mozilla.fenix.perf.ProfilerViewModel
@@ -66,7 +68,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
     private lateinit var accountUiView: AccountUiView
     private val profilerViewModel: ProfilerViewModel by activityViewModels()
 
-    private val accountObserver = object : AccountObserver {
+    @VisibleForTesting
+    internal val accountObserver = object : AccountObserver {
         private fun updateAccountUi(profile: Profile? = null) {
             val context = context ?: return
             lifecycleScope.launch {
@@ -98,13 +101,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
             accountManager = requireComponents.backgroundServices.accountManager,
             httpClient = requireComponents.core.client,
             updateFxAAllowDomesticChinaServerMenu = ::updateFxAAllowDomesticChinaServerMenu,
-        )
-
-        // Observe account changes to keep the UI up-to-date.
-        requireComponents.backgroundServices.accountManager.register(
-            accountObserver,
-            owner = this,
-            autoPause = true,
         )
 
         // It's important to update the account UI state in onCreate since that ensures we'll never
@@ -183,6 +179,23 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
         // Consider finish of `onResume` to be the point at which we consider this fragment as 'created'.
         creatingFragment = false
+    }
+
+    override fun onStart() {
+        super.onStart()
+        // Observe account changes to keep the UI up-to-date.
+        requireComponents.backgroundServices.accountManager.register(
+            accountObserver,
+            owner = this,
+            autoPause = true,
+        )
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // If the screen isn't visible we don't need to show updates.
+        // Also prevent the observer registered to the FXA singleton causing memory leaks.
+        requireComponents.backgroundServices.accountManager.unregister(accountObserver)
     }
 
     override fun onDestroyView() {
@@ -266,6 +279,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
             }
             resources.getString(R.string.pref_key_https_only_settings) -> {
                 SettingsFragmentDirections.actionSettingsFragmentToHttpsOnlyFragment()
+            }
+            resources.getString(R.string.pref_key_cookie_banner_settings) -> {
+                CookieBanners.visitedSetting.record(mozilla.components.service.glean.private.NoExtras())
+                SettingsFragmentDirections.actionSettingsFragmentToCookieBannerFragment()
             }
             resources.getString(R.string.pref_key_accessibility) -> {
                 SettingsFragmentDirections.actionSettingsFragmentToAccessibilityFragment()
@@ -420,9 +437,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
         val preferenceLeakCanary = findPreference<Preference>(leakKey)
         val preferenceRemoteDebugging = findPreference<Preference>(debuggingKey)
         val preferenceMakeDefaultBrowser =
-            requirePreference<Preference>(R.string.pref_key_make_default_browser)
+            requirePreference<DefaultBrowserPreference>(R.string.pref_key_make_default_browser)
+
         val preferenceOpenLinksInExternalApp =
             findPreference<Preference>(getPreferenceKey(R.string.pref_key_open_links_in_external_app))
+
         if (!Config.channel.isReleased) {
             preferenceLeakCanary?.setOnPreferenceChangeListener { _, newValue ->
                 val isEnabled = newValue == true
@@ -439,8 +458,11 @@ class SettingsFragment : PreferenceFragmentCompat() {
             true
         }
 
-        preferenceMakeDefaultBrowser.onPreferenceClickListener =
-            getClickListenerForMakeDefaultBrowser()
+        preferenceMakeDefaultBrowser.apply {
+            updateSwitch()
+            onPreferenceClickListener =
+                getClickListenerForMakeDefaultBrowser()
+        }
 
         preferenceOpenLinksInExternalApp?.onPreferenceChangeListener = SharedPreferenceUpdater()
 
@@ -448,6 +470,8 @@ class SettingsFragment : PreferenceFragmentCompat() {
             findPreference<Preference>(getPreferenceKey(R.string.pref_key_start_profiler))
 
         with(requireContext().settings()) {
+            findPreference<Preference>(getPreferenceKey(R.string.pref_key_cookie_banner_settings))
+                ?.isVisible = shouldShowCookieBannerUI
             findPreference<Preference>(
                 getPreferenceKey(R.string.pref_key_nimbus_experiments),
             )?.isVisible = showSecretDebugMenuThisSession
@@ -522,7 +546,7 @@ class SettingsFragment : PreferenceFragmentCompat() {
             findPreference<Preference>(getPreferenceKey(R.string.pref_key_override_amo_collection))
 
         val show = (
-            Config.channel.isNightlyOrDebug && (
+            FeatureFlags.customExtensionCollectionFeature && (
                 settings.amoCollectionOverrideConfigured() || settings.showSecretDebugMenuThisSession
                 )
             )

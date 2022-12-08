@@ -15,8 +15,10 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import mozilla.components.lib.state.ext.consumeFrom
@@ -40,7 +42,7 @@ import org.mozilla.fenix.settings.logins.interactor.AddLoginInteractor
  * Displays the editable new login information for a single website
  */
 @Suppress("TooManyFunctions", "NestedBlockDepth", "ForbiddenComment")
-class AddLoginFragment : Fragment(R.layout.fragment_add_login) {
+class AddLoginFragment : Fragment(R.layout.fragment_add_login), MenuProvider {
 
     private lateinit var loginsFragmentStore: LoginsFragmentStore
     private lateinit var interactor: AddLoginInteractor
@@ -57,7 +59,7 @@ class AddLoginFragment : Fragment(R.layout.fragment_add_login) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setHasOptionsMenu(true)
+        requireActivity().addMenuProvider(this, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
         _binding = FragmentAddLoginBinding.bind(view)
 
@@ -193,8 +195,10 @@ class AddLoginFragment : Fragment(R.layout.fragment_add_login) {
 
         binding.usernameText.addTextChangedListener(
             object : TextWatcher {
-                override fun afterTextChanged(u: Editable?) {
-                    usernameChanged = true
+                override fun afterTextChanged(editable: Editable?) {
+                    // update usernameChanged to true when the text is not empty,
+                    // otherwise it is not changed, as this screen starts with an empty username.
+                    usernameChanged = editable.toString().isNotEmpty()
                     updateUsernameField()
                     setSaveButtonState()
                     findDuplicate()
@@ -329,14 +333,16 @@ class AddLoginFragment : Fragment(R.layout.fragment_add_login) {
     }
 
     private fun setSaveButtonState() {
-        activity?.invalidateOptionsMenu()
+        activity?.invalidateMenu()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    override fun onCreateMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.login_save, menu)
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
+    override fun onPrepareMenu(menu: Menu) {
+        super.onPrepareMenu(menu)
+
         val saveButton = menu.findItem(R.id.save_login_button)
         val changesMadeWithNoErrors = validHostname && validUsername && validPassword
         saveButton.isEnabled = changesMadeWithNoErrors
@@ -356,7 +362,7 @@ class AddLoginFragment : Fragment(R.layout.fragment_add_login) {
         showToolbar(getString(R.string.add_login))
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+    override fun onMenuItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         R.id.save_login_button -> {
             view?.hideKeyboard()
             interactor.onAddLogin(

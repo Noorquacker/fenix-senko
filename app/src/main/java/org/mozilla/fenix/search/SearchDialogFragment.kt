@@ -5,11 +5,13 @@
 package org.mozilla.fenix.search
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
@@ -24,6 +26,7 @@ import android.view.ViewStub
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.inputmethod.InputMethodManager
+import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.appcompat.content.res.AppCompatResources
@@ -35,9 +38,10 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavGraph
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import mozilla.components.browser.domains.autocomplete.ShippedDomainsProvider
@@ -150,6 +154,7 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return object : Dialog(requireContext(), this.theme) {
+            @Deprecated("Deprecated in Java")
             override fun onBackPressed() {
                 this@SearchDialogFragment.onBackPressed()
             }
@@ -174,6 +179,9 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
                 tabId = args.sessionId,
                 pastedText = args.pastedText,
                 searchAccessPoint = args.searchAccessPoint,
+                searchEngine = requireComponents.core.store.state.search.searchEngines.firstOrNull {
+                    it.id == args.searchEngine
+                },
             ),
         )
 
@@ -202,7 +210,7 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
         )
 
         val fromHomeFragment =
-            findNavController().previousBackStackEntry?.destination?.id == R.id.homeFragment
+            getPreviousDestination()?.destination?.id == R.id.homeFragment
 
         toolbarView = ToolbarView(
             requireContext(),
@@ -252,7 +260,7 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
 
         requireComponents.core.engine.speculativeCreateSession(isPrivate)
 
-        when (findNavController().previousBackStackEntry?.destination?.id) {
+        when (getPreviousDestination()?.destination?.id) {
             R.id.homeFragment -> {
                 // When displayed above home, dispatches the touch events to scrim area to the HomeFragment
                 binding.searchWrapper.background = ColorDrawable(Color.TRANSPARENT)
@@ -292,7 +300,12 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
             flow.map { state -> state.search }
                 .ifChanged()
                 .collect { search ->
-                    store.dispatch(SearchFragmentAction.UpdateSearchState(search))
+                    store.dispatch(
+                        SearchFragmentAction.UpdateSearchState(
+                            search,
+                            showUnifiedSearchFeature,
+                        ),
+                    )
 
                     updateSearchSelectorMenu(search.searchEngines)
                 }
@@ -301,7 +314,7 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
         setupConstraints(view)
 
         // When displayed above browser or home screen, dismisses keyboard when touching scrim area
-        when (findNavController().previousBackStackEntry?.destination?.id) {
+        when (getPreviousDestination()?.destination?.id) {
             R.id.browserFragment, R.id.homeFragment -> {
                 binding.searchWrapper.setOnTouchListener { _, _ ->
                     binding.searchWrapper.hideKeyboard()
@@ -376,6 +389,7 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
                         from = BrowserDirection.FromSearchDialog,
                     )
             }
+            requireContext().components.clipboardHandler.text = null
         }
 
         val stubListener = ViewStub.OnInflateListener { _, inflated ->
@@ -508,6 +522,12 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
 
     override fun onResume() {
         super.onResume()
+
+        qrFeature.get()?.let {
+            if (it.isScanInProgress) {
+                it.scan(binding.searchWrapper.id)
+            }
+        }
 
         view?.post {
             // We delay querying the clipboard by posting this code to the main thread message queue,
@@ -652,7 +672,9 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
         when (requestCode) {
             REQUEST_CODE_CAMERA_PERMISSIONS -> qrFeature.withFeature {
                 it.onPermissionsResult(permissions, grantResults)
-                resetFocus()
+                if (grantResults.contains(PackageManager.PERMISSION_DENIED)) {
+                    resetFocus()
+                }
                 requireContext().settings().setCameraPermissionNeededState = false
             }
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -724,9 +746,9 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
                 ) {
                     interactor.onMenuItemTapped(SearchSelectorMenu.Item.SearchEngine(it))
                 }
-            } + searchSelectorMenu.menuItems()
+            }
 
-        searchSelectorMenu.menuController.submitList(searchEngineList)
+        searchSelectorMenu.menuController.submitList(searchSelectorMenu.menuItems(searchEngineList))
         toolbarView.view.invalidateActions()
     }
 
@@ -902,6 +924,37 @@ class SearchDialogFragment : AppCompatDialogFragment(), UserInteractionHandler {
                 requireContext().getColorFromAttr(color),
             )
         }
+    }
+
+    /**
+     * Gets the previous visible [NavBackStackEntry].
+     * This skips over any [NavBackStackEntry] that is associated with a [NavGraph] or refers to this
+     * class as a navigation destination.
+     */
+    @VisibleForTesting
+    @SuppressLint("RestrictedApi")
+    internal fun getPreviousDestination(): NavBackStackEntry? {
+        // This duplicates the platform functionality for "previousBackStackEntry" but additionally skips this entry.
+
+        val descendingEntries = findNavController().backQueue.reversed().iterator()
+        // Throw the topmost destination away.
+        if (descendingEntries.hasNext()) {
+            descendingEntries.next()
+        }
+
+        while (descendingEntries.hasNext()) {
+            val entry = descendingEntries.next()
+            // Using the canonicalName is safer - see https://github.com/mozilla-mobile/android-components/pull/10810
+            // simpleName is used as a backup to avoid the not null assertion (!!) operator.
+            val currentClassName = this::class.java.canonicalName?.substringAfterLast('.')
+                ?: this::class.java.simpleName
+
+            // Throw this entry away if it's the current top and ignore returning the base nav graph.
+            if (entry.destination !is NavGraph && !entry.destination.displayName.contains(currentClassName, true)) {
+                return entry
+            }
+        }
+        return null
     }
 
     companion object {
